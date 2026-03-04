@@ -23,6 +23,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -54,6 +56,8 @@ namespace client_v2 {
 const uint32_t kStringReserveSize = 32;
 
 static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows);
+static void PrintTableToFile(const std::vector<std::vector<std::string>>& rows);
+static void PrintTableToFile(const std::vector<std::vector<ftxui::Element>>& rows);
 
 std::string TruncateString(const std::string& str) {
   if (str.size() <= kStringReserveSize) {
@@ -92,19 +96,65 @@ bool Pretty::ShowError(const dingodb::pb::error::Error& error) {
   return false;
 }
 
-static void PrintTable(const std::vector<std::vector<std::string>>& rows) {
-  if (rows.empty()) {
-    return;
+// Output plain text table to file/non-TTY (ensures complete content)
+static void PrintTableToFile(const std::vector<std::vector<std::string>>& rows) {
+  if (rows.empty()) return;
+
+  size_t col_count = rows[0].size();
+
+  // Calculate the maximum content width for each column
+  std::vector<size_t> col_widths(col_count, 0);
+  for (const auto& row : rows) {
+    for (size_t i = 0; i < row.size() && i < col_count; ++i) {
+      col_widths[i] = std::max(col_widths[i], row[i].size());
+    }
   }
+
+  // Print top border
+  std::cout << "+";
+  for (size_t i = 0; i < col_count; ++i) {
+    std::cout << std::string(col_widths[i] + 2, '-');
+    std::cout << "+";
+  }
+  std::cout << "\n";
+
+  // Print each row
+  for (size_t r = 0; r < rows.size(); ++r) {
+    std::cout << "|";
+    for (size_t i = 0; i < col_count; ++i) {
+      std::string cell = (i < rows[r].size()) ? rows[r][i] : "";
+      std::cout << " " << std::left << std::setw(col_widths[i]) << cell << " |";
+    }
+    std::cout << "\n";
+
+    // Print separator line after header
+    if (r == 0) {
+      std::cout << "+";
+      for (size_t i = 0; i < col_count; ++i) {
+        std::cout << std::string(col_widths[i] + 2, '=');
+        std::cout << "+";
+      }
+      std::cout << "\n";
+    }
+  }
+
+  // Print bottom border
+  std::cout << "+";
+  for (size_t i = 0; i < col_count; ++i) {
+    std::cout << std::string(col_widths[i] + 2, '-');
+    std::cout << "+";
+  }
+  std::cout << "\n" << std::endl;
+}
+
+// Output FTXUI table to terminal
+static void PrintTableToTerminal(const std::vector<std::vector<std::string>>& rows) {
+  if (rows.empty()) return;
   std::cout << std::endl;
-  int clounm_num = rows[0].size();
 
   auto table = ftxui::Table(rows);
 
   table.SelectAll().Border(ftxui::LIGHT);
-  // table.SelectAll().Separator(ftxui::LIGHT);
-
-  // Make first row bold with a double border.
   table.SelectRow(0).Decorate(ftxui::bold);
   table.SelectRow(0).SeparatorVertical(ftxui::LIGHT);
   table.SelectRow(0).Border(ftxui::DOUBLE);
@@ -115,6 +165,23 @@ static void PrintTable(const std::vector<std::vector<std::string>>& rows) {
   screen.Print();
 
   std::cout << std::endl;
+}
+
+// Unified entry for string table output (auto-detects TTY)
+static void PrintTable(const std::vector<std::vector<std::string>>& rows) {
+  if (rows.empty()) {
+    return;
+  }
+
+  bool is_tty = isatty(STDOUT_FILENO);
+
+  if (!is_tty) {
+    // Redirected to file/pipe: use plain text for complete content
+    PrintTableToFile(rows);
+  } else {
+    // Terminal: use FTXUI rendering
+    PrintTableToTerminal(rows);
+  }
 }
 
 static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows) {
@@ -224,19 +291,80 @@ static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows
   std::cout << std::endl;
 }
 
-static void PrintTable(const std::vector<std::vector<ftxui::Element>>& rows) {
-  if (rows.empty()) {
-    return;
+// Helper function to extract text from Element by rendering to screen and extracting characters
+static std::string ExtractElementText(const ftxui::Element& element) {
+  if (!element) return "";
+
+  // Render element to a screen buffer and extract the text content
+  // This handles all element types (text, paragraph, vflow, etc.) uniformly.
+  // Use Fit() to avoid truncating wrapped content.
+  auto screen = ftxui::Screen::Create(ftxui::Dimension::Fit(element));
+  ftxui::Render(screen, element);
+
+  // Extract text from rendered output
+  std::string text;
+  for (int y = 0; y < screen.dimy(); ++y) {
+    std::string line;
+    for (int x = 0; x < screen.dimx(); ++x) {
+      auto& pixel = screen.PixelAt(x, y);
+      // Keep spaces inside content; only skip empty characters.
+      if (!pixel.character.empty() && pixel.character[0] != '\0') {
+        line += pixel.character;
+      }
+    }
+
+    // Trim layout padding while preserving intra-word spaces.
+    size_t first = line.find_first_not_of(' ');
+    if (first == std::string::npos) {
+      continue;
+    }
+    size_t last = line.find_last_not_of(' ');
+    line = line.substr(first, last - first + 1);
+
+    if (!line.empty()) {
+      if (!text.empty()) text += " ";
+      text += line;
+    }
   }
+
+  return text.empty() ? "" : text;
+}
+
+// Convert Element rows to string rows for file output
+static std::vector<std::vector<std::string>> ConvertElementsToStrings(
+    const std::vector<std::vector<ftxui::Element>>& element_rows) {
+  std::vector<std::vector<std::string>> string_rows;
+  string_rows.reserve(element_rows.size());
+
+  for (const auto& element_row : element_rows) {
+    std::vector<std::string> string_row;
+    string_row.reserve(element_row.size());
+    for (const auto& element : element_row) {
+      string_row.push_back(ExtractElementText(element));
+    }
+    string_rows.push_back(std::move(string_row));
+  }
+
+  return string_rows;
+}
+
+// Output Element table to file (converts to text first)
+static void PrintTableToFile(const std::vector<std::vector<ftxui::Element>>& rows) {
+  if (rows.empty()) return;
+
+  // Convert to string representation and output
+  auto string_rows = ConvertElementsToStrings(rows);
+  PrintTableToFile(string_rows);
+}
+
+// Output Element table to terminal using FTXUI
+static void PrintTableToTerminal(const std::vector<std::vector<ftxui::Element>>& rows) {
+  if (rows.empty()) return;
   std::cout << std::endl;
-  int clounm_num = rows[0].size();
 
   auto table = ftxui::Table(rows);
 
   table.SelectAll().Border(ftxui::LIGHT);
-  // table.SelectAll().Separator(ftxui::LIGHT);
-
-  // Make first row bold with a double border.
   table.SelectRow(0).Decorate(ftxui::bold);
   table.SelectRow(0).SeparatorVertical(ftxui::LIGHT);
   table.SelectRow(0).Border(ftxui::DOUBLE);
@@ -249,6 +377,23 @@ static void PrintTable(const std::vector<std::vector<ftxui::Element>>& rows) {
   screen.Print();
 
   std::cout << std::endl;
+}
+
+// Unified entry for Element table output (auto-detects TTY)
+static void PrintTable(const std::vector<std::vector<ftxui::Element>>& rows) {
+  if (rows.empty()) {
+    return;
+  }
+
+  bool is_tty = isatty(STDOUT_FILENO);
+
+  if (!is_tty) {
+    // Redirected to file/pipe: convert to text for complete content
+    PrintTableToFile(rows);
+  } else {
+    // Terminal: use FTXUI rendering
+    PrintTableToTerminal(rows);
+  }
 }
 
 static int GetTerminalHeightFallback() {
