@@ -11,6 +11,7 @@ add_subdirectory(misc)
 add_subdirectory(document)
 add_subdirectory(txn)
 add_subdirectory(br)
+add_subdirectory(client_v2)
 
 
 add_executable(dingodb_unit_test main.cc)
@@ -33,7 +34,8 @@ set(UNIT_TEST_LIBS
     $<TARGET_OBJECTS:UNIT_TEST_MISC_OBJS>
     $<TARGET_OBJECTS:UNIT_TEST_DOCUMENT_OBJS>
     $<TARGET_OBJECTS:UNIT_TEST_TXN_OBJS>
-    $<TARGET_OBJECTS:UNIT_TEST_BR_OBJS>)
+    $<TARGET_OBJECTS:UNIT_TEST_BR_OBJS>
+    $<TARGET_OBJECTS:UNIT_TEST_CLIENT_V2_OBJS>)
 
 set(UNIT_TEST_LIBS ${UNIT_TEST_LIBS} ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES} "-Xlinker \"-(\"" ${BLAS_LIBRARIES}
                    "-Xlinker \"-)\"")
