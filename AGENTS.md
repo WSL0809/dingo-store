@@ -1,50 +1,81 @@
 # DingoDB CLI Project Guide for AI Agents
 
-## Project Scope
+## Scope
 
-This repository is **CLI-only**. It only contains code required to build and run `dingodb_cli`.
+This repository is intentionally trimmed to build **only** `dingodb_cli` (the v2 CLI client).
 
-Removed from this repo:
+Avoid reintroducing:
 
-- Server roles and storage engine implementation
+- server/store/coordinator implementations
 - Java SDK and packaging
-- Deployment/docker scripts
-- Unit test suites for server modules
+- deploy/docker scripts
+- unit-test trees for server modules
 
-## Key Binary
+## Key Target
 
-- `dingodb_cli` (from `src/client_v2`)
+- `dingodb_cli` (output: `build/bin/dingodb_cli`)
 
-## Source Layout
+## Layout
 
 ```text
-src/client_v2/      # CLI commands and main()
-src/common/         # Shared utilities required by CLI
-src/coordinator/    # coordinator_interaction
-src/coprocessor/    # coprocessor utils
-src/mvcc/           # mvcc codec
-src/vector/         # vector codec
-src/document/       # document codec
-src/serial/         # serialization submodule
+src/client_v2/            # CLI commands and main()
+src/common/               # Shared helpers required by CLI
+src/coordinator/          # coordinator_interaction used by CLI
+src/coprocessor/          # coprocessor utils used by CLI
+src/mvcc/                 # mvcc codec used by CLI
+src/vector/               # vector codec used by CLI
+src/document/             # document codec used by CLI
+src/serial/               # serialization submodule
+dingo-store-proto/        # protobuf submodule (compiled into build/proto)
+contrib/cli11/            # CLI parser
+contrib/FTXUI/            # built via CMake ExternalProject
+contrib/tantivy-search/   # Rust static lib consumed by CMake (prebuilt)
 ```
 
-## Submodules Kept
+## Dependencies
 
-- `src/serial`
-- `dingo-store-proto`
-- `contrib/cli11`
-- `contrib/FTXUI`
-- `contrib/tantivy-search`
+- `dingo-eureka` is required for C/C++ third-party deps (gflags/glog/brpc/braft/protobuf/rocksdb/...).
 
-## Build Notes
+`DINGO_EUREKA_INSTALL_PATH` lookup order:
 
-1. Build/prepare `tantivy-search` static library first and copy it to:
-   - `build/third-party/install/tantivy-search/lib/libtantivy_search.a`
-   - `build/third-party/install/tantivy-search/include/`
-2. Configure with CMake and build target `dingodb_cli` only.
+1. `-DDINGO_EUREKA_INSTALL_PATH=...` (CMake option)
+2. environment variable `DINGO_EUREKA_INSTALL_PATH`
+3. default `~/.local/dingo-eureka`
 
-## Coding Conventions
+## Submodules
 
-- C++17
+Initialize only the kept submodules:
+
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+## Build
+
+`tantivy-search` must be built and staged at:
+
+- `build/third-party/install/tantivy-search/lib/libtantivy_search.a`
+- `build/third-party/install/tantivy-search/include/`
+
+Example:
+
+```bash
+mkdir -p build/third-party/install/tantivy-search/lib
+mkdir -p build/third-party/install/tantivy-search/include
+
+(cd contrib/tantivy-search && cargo build --release)
+cp contrib/tantivy-search/target/release/libtantivy_search.a build/third-party/install/tantivy-search/lib/
+cp -r contrib/tantivy-search/include/* build/third-party/install/tantivy-search/include/
+
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DTHIRD_PARTY_BUILD_TYPE=Release
+cmake --build build --target dingodb_cli -j
+
+build/bin/dingodb_cli --help
+```
+
+## Conventions
+
+- C++17, Google-ish style (see `.clang-format` and `.clang-tidy`)
 - Keep changes scoped to CLI behavior
-- Avoid reintroducing server-side dependencies into CLI paths
+- Prefer `rg` for code search
