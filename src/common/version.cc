@@ -109,9 +109,9 @@ std::string GetBuildFlag() {
 #endif
 
   return butil::string_printf(
-      "DINGO_STORE USE_MKL:[%s] USE_OPENBLAS:[%s] LINK_TCMALLOC:[%s] BRPC_ENABLE_CPU_PROFILER:[%s] "
-      "USE_SANITIZE:[%s]\nDINGO_STORE USE_DISKANN:[%s]  DISKANN_DEPEND_ON_SYSTEM:[%s] "
-      "WITH_VECTOR_INDEX_USE_DOCUMENT:[%s]\nDINGO_STORE "
+      "DINGODB_CLI USE_MKL:[%s] USE_OPENBLAS:[%s] LINK_TCMALLOC:[%s] BRPC_ENABLE_CPU_PROFILER:[%s] "
+      "USE_SANITIZE:[%s]\nDINGODB_CLI USE_DISKANN:[%s]  DISKANN_DEPEND_ON_SYSTEM:[%s] "
+      "WITH_VECTOR_INDEX_USE_DOCUMENT:[%s]\nDINGODB_CLI "
       "BOOST_SUMMARY:[%s]\n",
       FLAGS_use_mkl ? "ON" : "OFF", FLAGS_use_openblas ? "ON" : "OFF", FLAGS_use_tcmalloc ? "ON" : "OFF",
       FLAGS_use_profiler ? "ON" : "OFF", FLAGS_use_sanitizer ? "ON" : "OFF", FLAGS_use_diskann ? "ON" : "OFF",
@@ -136,15 +136,15 @@ void DingoEurekaShowVerion() {
 }
 
 void DingoShowVerion() {
-  printf("DINGO_STORE VERSION:[%s-%s]\n", FLAGS_major_version.c_str(), FLAGS_minor_version.c_str());
-  printf("DINGO_STORE GIT_TAG_VERSION:[%s]\n", FLAGS_git_tag_name.c_str());
-  printf("DINGO_STORE GIT_COMMIT_HASH:[%s]\n", FLAGS_git_commit_hash.c_str());
-  printf("DINGO_STORE BUILD_TYPE:[%s] CONTRIB_BUILD_TYPE:[%s]\n", FLAGS_dingo_build_type.c_str(),
+  printf("DINGODB_CLI VERSION:[%s-%s]\n", FLAGS_major_version.c_str(), FLAGS_minor_version.c_str());
+  printf("DINGODB_CLI GIT_TAG_VERSION:[%s]\n", FLAGS_git_tag_name.c_str());
+  printf("DINGODB_CLI GIT_COMMIT_HASH:[%s]\n", FLAGS_git_commit_hash.c_str());
+  printf("DINGODB_CLI BUILD_TYPE:[%s] CONTRIB_BUILD_TYPE:[%s]\n", FLAGS_dingo_build_type.c_str(),
          FLAGS_dingo_contrib_build_type.c_str());
   printf("%s", GetBuildFlag().c_str());
   std::string git_submodule = FLAGS_git_submodule;
   ReplaceAll(git_submodule, "\t", "\n");
-  printf("DINGO_STORE GIT_SUBMODULE:[\n%s]\n", git_submodule.c_str());
+  printf("DINGODB_CLI GIT_SUBMODULE:[\n%s]\n", git_submodule.c_str());
   DingoEurekaShowVerion();
 }
 
@@ -155,15 +155,15 @@ void DingoEurekaLogVerion() {
 }
 
 void DingoLogVerion() {
-  DINGO_LOG(INFO) << "DINGO_STORE VERSION:[" << FLAGS_major_version << "-" << FLAGS_minor_version << "]";
-  DINGO_LOG(INFO) << "DINGO_STORE GIT_TAG_VERSION:[" << FLAGS_git_tag_name << "]";
-  DINGO_LOG(INFO) << "DINGO_STORE GIT_COMMIT_HASH:[" << FLAGS_git_commit_hash << "]";
-  DINGO_LOG(INFO) << "DINGO_STORE BUILD_TYPE:[" << FLAGS_dingo_build_type << "] CONTRIB_BUILD_TYPE:["
+  DINGO_LOG(INFO) << "DINGODB_CLI VERSION:[" << FLAGS_major_version << "-" << FLAGS_minor_version << "]";
+  DINGO_LOG(INFO) << "DINGODB_CLI GIT_TAG_VERSION:[" << FLAGS_git_tag_name << "]";
+  DINGO_LOG(INFO) << "DINGODB_CLI GIT_COMMIT_HASH:[" << FLAGS_git_commit_hash << "]";
+  DINGO_LOG(INFO) << "DINGODB_CLI BUILD_TYPE:[" << FLAGS_dingo_build_type << "] CONTRIB_BUILD_TYPE:["
                   << FLAGS_dingo_contrib_build_type << "]";
   DINGO_LOG(INFO) << GetBuildFlag();
   std::string git_submodule = FLAGS_git_submodule;
   ReplaceAll(git_submodule, "\t", "\n");
-  DINGO_LOG(INFO) << "DINGO_STORE GIT_SUBMODULE:[\n" << git_submodule << "]";
+  DINGO_LOG(INFO) << "DINGODB_CLI GIT_SUBMODULE:[\n" << git_submodule << "]";
   DINGO_LOG(INFO) << "PID: " << getpid();
   DingoEurekaLogVerion();
 }
@@ -190,6 +190,6 @@ pb::common::VersionInfo GetVersionInfo() {
   return version_info;
 }
 
-DEFINE_bool(show_version, false, "Print DingoStore version Flag");
+DEFINE_bool(show_version, false, "Print DingoDB CLI version flag");
 
 }  // namespace dingodb

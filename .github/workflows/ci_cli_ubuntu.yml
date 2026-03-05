@@ -1,0 +1,45 @@
+name: CI_Dingodb_CLI_Ubuntu
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  BUILD_TYPE: Release
+  THIRD_PARTY_BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: dingodatabase/dingo-store-ubuntu-22.04-dev:eureka
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set Safe Directory
+        run: git config --global --add safe.directory $PWD
+
+      - name: Prepare Tantivy Search
+        run: |
+          mkdir -p ${{ github.workspace }}/build/third-party/install/tantivy-search/lib
+          mkdir -p ${{ github.workspace }}/build/third-party/install/tantivy-search/include
+          cd ${{ github.workspace }}/contrib/tantivy-search
+          cargo build --release
+          cp target/release/libtantivy_search.a ${{ github.workspace }}/build/third-party/install/tantivy-search/lib/
+          cp -r include/* ${{ github.workspace }}/build/third-party/install/tantivy-search/include/
+
+      - name: Configure CMake
+        run: |
+          cmake -B ${{ github.workspace }}/build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DTHIRD_PARTY_BUILD_TYPE=${{ env.THIRD_PARTY_BUILD_TYPE }}
+
+      - name: Build dingodb_cli
+        run: cmake --build ${{ github.workspace }}/build --target dingodb_cli --config ${{ env.BUILD_TYPE }}
+
+      - name: Smoke Test
+        run: ${{ github.workspace }}/build/bin/dingodb_cli --help

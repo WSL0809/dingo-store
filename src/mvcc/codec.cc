@@ -26,7 +26,6 @@
 #include "common/serial_helper.h"
 #include "fmt/core.h"
 #include "glog/logging.h"
-#include "server/service_helper.h"
 
 namespace dingodb {
 

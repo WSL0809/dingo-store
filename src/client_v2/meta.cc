@@ -28,7 +28,6 @@
 #include <vector>
 
 #include "butil/status.h"
-#include "client/coordinator_client_function.h"
 #include "client_v2/coordinator.h"
 #include "client_v2/helper.h"
 #include "client_v2/pretty.h"
@@ -36,7 +35,6 @@
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/version.h"
-#include "coordinator/tso_control.h"
 #include "fmt/core.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"

@@ -31,7 +31,7 @@
 #include "client_v2/helper.h"
 #include "common/helper.h"
 #include "common/logging.h"
-#include "coordinator/tso_control.h"
+#include "common/tso.h"
 #include "coprocessor/utils.h"
 #include "document/codec.h"
 #include "fmt/core.h"
@@ -298,8 +298,9 @@ static std::string ExtractElementText(const ftxui::Element& element) {
   // Render element to a screen buffer and extract the text content
   // This handles all element types (text, paragraph, vflow, etc.) uniformly.
   // Use Fit() to avoid truncating wrapped content.
-  auto screen = ftxui::Screen::Create(ftxui::Dimension::Fit(element));
-  ftxui::Render(screen, element);
+  auto mutable_element = element;
+  auto screen = ftxui::Screen::Create(ftxui::Dimension::Fit(mutable_element));
+  ftxui::Render(screen, mutable_element);
 
   // Extract text from rendered output
   std::string text;

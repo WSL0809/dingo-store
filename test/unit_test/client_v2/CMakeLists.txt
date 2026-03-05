@@ -1,5 +1,0 @@
-enable_testing()
-
-file(GLOB CLIENT_V2_TEST_SOURCES *.cc)
-
-add_library(UNIT_TEST_CLIENT_V2_OBJS OBJECT ${CLIENT_V2_TEST_SOURCES})

@@ -49,7 +49,7 @@
 #include "proto/common.pb.h"
 
 const std::string kProgramName = "dingodb_cli";
-const std::string kProgramDesc = "dingo-store client tool.";
+const std::string kProgramDesc = "dingodb-cli client tool.";
 
 void PrintSubcommandHelp(const CLI::App& app, const std::string& subcommand_name) {
   try {
