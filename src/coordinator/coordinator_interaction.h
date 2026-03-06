@@ -28,6 +28,7 @@
 #include "butil/fast_rand.h"
 #include "butil/scoped_lock.h"
 #include "butil/status.h"
+#include "common/cli_options.h"
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/safe_map.h"
@@ -37,7 +38,8 @@
 
 namespace dingodb {
 
-const int kMaxRetry = 5;
+const int kDefaultCoordinatorMaxRetry = 5;
+const int64_t kDefaultCoordinatorTimeoutMs = 60000;
 
 // For store interact with coordinator.
 class CoordinatorInteraction {
@@ -60,12 +62,12 @@ class CoordinatorInteraction {
 
   template <typename Request, typename Response>
   butil::Status SendRequest(const std::string& api_name, const Request& request, Response& response,
-                            int64_t time_out_ms = 60000,
+                            int64_t time_out_ms = -1,
                             pb::common::CoordinatorServiceType service_type = pb::common::ServiceTypeCoordinator);
 
   template <typename Request, typename Response>
   butil::Status SendRequest(pb::common::CoordinatorServiceType service_type, const std::string& api_name,
-                            const Request& request, Response& response, int64_t time_out_ms = 60000) {
+                            const Request& request, Response& response, int64_t time_out_ms = -1) {
     return SendRequest(api_name, request, response, time_out_ms, service_type);
   }
 
@@ -99,10 +101,13 @@ template <typename Request, typename Response>
 butil::Status CoordinatorInteraction::SendRequest(const std::string& api_name, const Request& request,
                                                   Response& response, int64_t time_out_ms,
                                                   pb::common::CoordinatorServiceType service_type) {
+  const auto& options = dingodb::cli::GetOptions();
+  const int64_t timeout_ms =
+      time_out_ms > 0 ? time_out_ms : (options.timeout_ms > 0 ? options.timeout_ms : kDefaultCoordinatorTimeoutMs);
   if (use_service_name_) {
-    return SendRequestByService(api_name, request, response, time_out_ms, service_type);
+    return SendRequestByService(api_name, request, response, timeout_ms, service_type);
   } else {
-    return SendRequestByList(api_name, request, response, time_out_ms, service_type);
+    return SendRequestByList(api_name, request, response, timeout_ms, service_type);
   }
 }
 
@@ -122,6 +127,8 @@ butil::Status CoordinatorInteraction::SendRequestByService(const std::string& ap
 
   // DINGO_LOG(DEBUG) << "send request api " << api_name << " request: " << request.ShortDebugString();
   int retry_count = 0;
+  const int max_retry =
+      dingodb::cli::GetOptions().max_retry >= 0 ? dingodb::cli::GetOptions().max_retry : kDefaultCoordinatorMaxRetry;
   do {
     brpc::Controller cntl;
     cntl.set_log_id(butil::fast_rand());
@@ -228,7 +235,7 @@ butil::Status CoordinatorInteraction::SendRequestByService(const std::string& ap
         return butil::Status(response.error().errcode(), response.error().errmsg());
       }
     }
-  } while (retry_count < kMaxRetry);
+  } while (retry_count < max_retry);
 
   return butil::Status(pb::error::EINTERNAL,
                        "connect with meta server fail, no leader found or connect timeout, retry count: %d",
@@ -251,6 +258,8 @@ butil::Status CoordinatorInteraction::SendRequestByList(const std::string& api_n
 
   // DINGO_LOG(DEBUG) << "send request api " << api_name << " request: " << request.ShortDebugString();
   int retry_count = 0;
+  const int max_retry =
+      dingodb::cli::GetOptions().max_retry >= 0 ? dingodb::cli::GetOptions().max_retry : kDefaultCoordinatorMaxRetry;
   do {
     brpc::Controller cntl;
     cntl.set_log_id(butil::fast_rand());
@@ -277,7 +286,7 @@ butil::Status CoordinatorInteraction::SendRequestByList(const std::string& api_n
       return butil::Status();
     }
 
-  } while (retry_count < kMaxRetry);
+  } while (retry_count < max_retry);
 
   return butil::Status(pb::error::EINTERNAL,
                        "connect with meta server fail, no leader found or connect timeout, retry count: %d",

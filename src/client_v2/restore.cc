@@ -42,7 +42,7 @@ void SetUpRestoreSubCommands(CLI::App &app) {
 
 static bool SetUpStore(const std::string &url, const std::vector<std::string> &addrs, int64_t region_id) {
   if (Helper::SetUp(url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   if (!addrs.empty()) {
     return client_v2::InteractionManager::GetInstance().CreateStoreInteraction(addrs);
@@ -193,7 +193,7 @@ void SetUpRestoreRegion(CLI::App &app) {
 
 void RunRestoreRegion(RestoreRegionOptions const &opt) {
   if (SetUpStore(opt.coor_url, {}, opt.region_id) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   rocksdb::Options options;
   options.env = rocksdb::Env::Default();
@@ -287,7 +287,7 @@ void SetUpRestoreRegionData(CLI::App &app) {
 
 void RunRestoreRegionData(RestoreRegionDataOptions const &opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   rocksdb::Options options;
   options.env = rocksdb::Env::Default();
@@ -396,7 +396,7 @@ void SetUpCheckRestoreRegionData(CLI::App &app) {
 
 void RunCheckRestoreRegionData(CheckRestoreRegionDataOptions const &opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::common::Region region;

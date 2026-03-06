@@ -28,7 +28,9 @@
 #include <utility>
 #include <vector>
 
+#include "client_v2/cli_state.h"
 #include "client_v2/helper.h"
+#include "common/cli_options.h"
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/tso.h"
@@ -59,6 +61,30 @@ static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows
 static void PrintTableToFile(const std::vector<std::vector<std::string>>& rows);
 static void PrintTableToFile(const std::vector<std::vector<ftxui::Element>>& rows);
 
+template <typename Response>
+static bool HandleJsonOutput(const Response& response) {
+  if (!dingodb::cli::IsJsonOutput()) {
+    return false;
+  }
+
+  CliState::GetInstance().SetJsonDataFromProto(response);
+  return true;
+}
+
+template <typename Message>
+static bool AppendProtoJson(nlohmann::json& target, const Message& message) {
+  const std::string json_string = dingodb::Helper::MessageToJsonString(message);
+  if (!nlohmann::json::accept(json_string)) {
+    CliState::GetInstance().MarkRuntimeError("Failed to parse protobuf JSON payload.");
+    return false;
+  }
+
+  target.push_back(nlohmann::json::parse(json_string));
+  return true;
+}
+
+static bool ShouldUseColor() { return !dingodb::cli::GetOptions().no_color; }
+
 std::string TruncateString(const std::string& str) {
   if (str.size() <= kStringReserveSize) {
     return str;
@@ -78,8 +104,9 @@ std::string TruncateHexString(const std::string& str) {
 
 bool Pretty::ShowError(const butil::Status& status) {
   if (status.error_code() != dingodb::pb::error::Errno::OK) {
-    std::cout << fmt::format("Error: {} {}", dingodb::pb::error::Errno_Name(status.error_code()), status.error_str())
-              << std::endl;
+    CliState::GetInstance().MarkRuntimeError(
+        fmt::format("{} {}", dingodb::pb::error::Errno_Name(status.error_code()), status.error_str()),
+        status.error_code(), dingodb::pb::error::Errno_Name(status.error_code()));
     return true;
   }
 
@@ -88,8 +115,9 @@ bool Pretty::ShowError(const butil::Status& status) {
 
 bool Pretty::ShowError(const dingodb::pb::error::Error& error) {
   if (error.errcode() != dingodb::pb::error::Errno::OK) {
-    std::cout << fmt::format("Error: {} {}", dingodb::pb::error::Errno_Name(error.errcode()), error.errmsg())
-              << std::endl;
+    CliState::GetInstance().MarkRuntimeError(
+        fmt::format("{} {}", dingodb::pb::error::Errno_Name(error.errcode()), error.errmsg()), error.errcode(),
+        dingodb::pb::error::Errno_Name(error.errcode()));
     return true;
   }
 
@@ -173,7 +201,26 @@ static void PrintTable(const std::vector<std::vector<std::string>>& rows) {
     return;
   }
 
+  if (dingodb::cli::IsJsonOutput()) {
+    return;
+  }
+
+  const auto format = dingodb::cli::GetOptions().format;
   bool is_tty = isatty(STDOUT_FILENO);
+
+  if (format == dingodb::cli::OutputFormat::kPlain) {
+    PrintTableToFile(rows);
+    return;
+  }
+
+  if (format == dingodb::cli::OutputFormat::kTable) {
+    if (is_tty) {
+      PrintTableToTerminal(rows);
+    } else {
+      PrintTableToFile(rows);
+    }
+    return;
+  }
 
   if (!is_tty) {
     // Redirected to file/pipe: use plain text for complete content
@@ -186,6 +233,14 @@ static void PrintTable(const std::vector<std::vector<std::string>>& rows) {
 
 static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows) {
   if (rows.empty()) return;
+  if (dingodb::cli::IsJsonOutput()) return;
+
+  const auto format = dingodb::cli::GetOptions().format;
+  if (format == dingodb::cli::OutputFormat::kPlain) {
+    PrintTableToFile(rows);
+    return;
+  }
+
   std::cout << std::endl;
 
   size_t col_count = rows[0].size();
@@ -200,6 +255,10 @@ static void PrintTableAdaptive(const std::vector<std::vector<std::string>>& rows
 
   // 2. Detect whether output is to a terminal
   bool is_tty = isatty(STDOUT_FILENO);
+  if (format == dingodb::cli::OutputFormat::kTable && !is_tty) {
+    PrintTableToFile(rows);
+    return;
+  }
 
   if (!is_tty) {
     // When outputting to a file, use plain text format to ensure complete content
@@ -369,8 +428,10 @@ static void PrintTableToTerminal(const std::vector<std::vector<ftxui::Element>>&
   table.SelectRow(0).Decorate(ftxui::bold);
   table.SelectRow(0).SeparatorVertical(ftxui::LIGHT);
   table.SelectRow(0).Border(ftxui::DOUBLE);
-  table.SelectRow(0).DecorateCells(color(ftxui::Color::Green));
-  table.SelectRow(0).Decorate(color(ftxui::Color::Green));
+  if (ShouldUseColor()) {
+    table.SelectRow(0).DecorateCells(color(ftxui::Color::Green));
+    table.SelectRow(0).Decorate(color(ftxui::Color::Green));
+  }
 
   auto document = table.Render();
   auto screen = ftxui::Screen::Create(ftxui::Dimension::Fit(document));
@@ -386,7 +447,26 @@ static void PrintTable(const std::vector<std::vector<ftxui::Element>>& rows) {
     return;
   }
 
+  if (dingodb::cli::IsJsonOutput()) {
+    return;
+  }
+
+  const auto format = dingodb::cli::GetOptions().format;
   bool is_tty = isatty(STDOUT_FILENO);
+
+  if (format == dingodb::cli::OutputFormat::kPlain) {
+    PrintTableToFile(rows);
+    return;
+  }
+
+  if (format == dingodb::cli::OutputFormat::kTable) {
+    if (is_tty) {
+      PrintTableToTerminal(rows);
+    } else {
+      PrintTableToFile(rows);
+    }
+    return;
+  }
 
   if (!is_tty) {
     // Redirected to file/pipe: convert to text for complete content
@@ -418,8 +498,12 @@ void Pretty::PrintTableInteractive(const std::vector<std::vector<ftxui::Element>
   static int non_table_lines = -1;  // -1 It indicates that testing has not yet been conducted.
   if (non_table_lines == -1) {
     auto sample_table = Table({header, body.front()});
+    auto sample_title = text("Interactive Table Viewer");
+    if (ShouldUseColor()) {
+      sample_title = sample_title | color(ftxui::Color::Green);
+    }
     auto doc = vbox({
-        text("📊 Interactive Table Viewer") | color(ftxui::Color::Green),
+        sample_title,
         separator(),
         sample_table.Render(),
         separator(),
@@ -455,11 +539,17 @@ void Pretty::PrintTableInteractive(const std::vector<std::vector<ftxui::Element>
     table.SelectRow(0).Decorate(bold);
     table.SelectRow(0).Border(DOUBLE);
     table.SelectRow(0).SeparatorVertical(LIGHT);
-    table.SelectRow(0).DecorateCells(color(ftxui::Color::Green));
-    table.SelectRow(0).Decorate(color(ftxui::Color::Green));
+    if (ShouldUseColor()) {
+      table.SelectRow(0).DecorateCells(color(ftxui::Color::Green));
+      table.SelectRow(0).Decorate(color(ftxui::Color::Green));
+    }
+    auto viewer_title = text("Interactive Table Viewer") | bold | center;
+    if (ShouldUseColor()) {
+      viewer_title = viewer_title | color(ftxui::Color::Green);
+    }
 
     return vbox({
-               text("📊 Interactive Table Viewer") | bold | center | color(ftxui::Color::Green),
+               viewer_title,
                separator(),
                table.Render() | flex,
                separator(),
@@ -513,6 +603,9 @@ void Pretty::Show(dingodb::pb::coordinator::GetCoordinatorMapResponse& response)
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   std::vector<std::vector<std::string>> rows = {
       {"Type", "Address", "ID", "State"},
@@ -536,6 +629,9 @@ void Pretty::Show(dingodb::pb::coordinator::GetCoordinatorMapResponse& response)
 
 void Pretty::Show(dingodb::pb::coordinator::GetStoreMapResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
 
@@ -568,11 +664,13 @@ void Pretty::Show(dingodb::pb::coordinator::GetStoreMapResponse& response) {
   PrintTableAdaptive(rows);
 
   // print summary
-  std::string summary = "Summary:";
-  for (auto& [type, count] : counts) {
-    summary += fmt::format(" {}({})", dingodb::pb::common::StoreType_Name(type), count);
+  if (!dingodb::cli::GetOptions().quiet) {
+    std::string summary = "Summary:";
+    for (auto& [type, count] : counts) {
+      summary += fmt::format(" {}({})", dingodb::pb::common::StoreType_Name(type), count);
+    }
+    std::cout << summary << std::endl;
   }
-  std::cout << summary << std::endl;
 }
 
 static bool IsExcludeColumns(const std::string& column, const std::vector<std::string>& exclude_columns) {
@@ -1013,7 +1111,7 @@ void ShowTxnTable(const dingodb::pb::debug::DumpRegionResponse::Txn& txn,
                   const dingodb::pb::meta::TableDefinition& table_definition,
                   const std::vector<std::string>& exclude_columns) {
   if (table_definition.name().empty()) {
-    std::cout << "Error: Missing table definition." << std::endl;
+    CliState::GetInstance().MarkRuntimeError("Missing table definition.");
     return;
   }
 
@@ -1121,11 +1219,16 @@ void Pretty::Show(const dingodb::pb::debug::DumpRegionResponse::Data& data,
   size = std::max(size, data.txn().locks_size());
   size = std::max(size, data.txn().writes_size());
 
-  std::cout << fmt::format("Summary: total count({})", size) << std::endl;
+  if (!dingodb::cli::GetOptions().quiet) {
+    std::cout << fmt::format("Summary: total count({})", size) << std::endl;
+  }
 }
 
 void Pretty::Show(dingodb::pb::debug::DumpRegionResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
 
@@ -1133,6 +1236,22 @@ void Pretty::Show(dingodb::pb::debug::DumpRegionResponse& response) {
 }
 
 void Pretty::Show(std::vector<TenantInfo> tenants) {
+  if (dingodb::cli::IsJsonOutput()) {
+    nlohmann::json data;
+    data["tenants"] = nlohmann::json::array();
+    for (const auto& tenant : tenants) {
+      data["tenants"].push_back({
+          {"id", tenant.id},
+          {"name", tenant.name},
+          {"comment", tenant.comment},
+          {"create_timestamp", tenant.create_time},
+          {"update_timestamp", tenant.update_time},
+      });
+    }
+    CliState::GetInstance().SetJsonData(data);
+    return;
+  }
+
   std::vector<std::vector<std::string>> rows;
   rows = {{"ID", "Name", "CreateTime", "UpdateTime", "Comment"}};
 
@@ -1202,6 +1321,9 @@ void Pretty::Show(dingodb::pb::store::TxnScanResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   if (!response.kvs().empty()) {
     ShowKeyValues(dingodb::Helper::PbRepeatedToVector(response.kvs()));
@@ -1253,12 +1375,18 @@ void Pretty::Show(dingodb::pb::store::TxnScanLockResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   ShowLockInfo(dingodb::Helper::PbRepeatedToVector(response.locks()));
 }
 
 void Pretty::Show(dingodb::pb::meta::CreateIndexResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   const auto& dingo_command_id = response.index_id();
@@ -1278,6 +1406,9 @@ void Pretty::Show(dingodb::pb::meta::CreateIndexResponse& response) {
 
 void Pretty::Show(dingodb::pb::document::DocumentSearchResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   if (response.document_with_scores_size() == 0) {
@@ -1303,6 +1434,9 @@ void Pretty::Show(dingodb::pb::document::DocumentSearchAllResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   if (response.document_with_scores_size() == 0) {
     std::cout << "Not search document ." << std::endl;
     return;
@@ -1324,6 +1458,9 @@ void Pretty::Show(dingodb::pb::document::DocumentSearchAllResponse& response) {
 
 void Pretty::Show(dingodb::pb::document::DocumentBatchQueryResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   if (response.doucments_size() == 0) {
@@ -1355,6 +1492,9 @@ void Pretty::Show(dingodb::pb::document::DocumentGetBorderIdResponse& response) 
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("ID"),
@@ -1368,6 +1508,9 @@ void Pretty::Show(dingodb::pb::document::DocumentGetBorderIdResponse& response) 
 }
 void Pretty::Show(dingodb::pb::document::DocumentScanQueryResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   if (response.documents_size() == 0) {
@@ -1399,6 +1542,9 @@ void Pretty::Show(dingodb::pb::document::DocumentCountResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("Count"),
@@ -1413,6 +1559,9 @@ void Pretty::Show(dingodb::pb::document::DocumentCountResponse& response) {
 
 void Pretty::Show(dingodb::pb::document::DocumentGetRegionMetricsResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   const auto& metrics = response.metrics();
@@ -1438,6 +1587,18 @@ void Pretty::Show(dingodb::pb::document::DocumentGetRegionMetricsResponse& respo
 }
 
 void Pretty::Show(const std::vector<dingodb::pb::common::Region>& regions) {
+  if (dingodb::cli::IsJsonOutput()) {
+    nlohmann::json data;
+    data["regions"] = nlohmann::json::array();
+    for (const auto& region : regions) {
+      if (!AppendProtoJson(data["regions"], region)) {
+        return;
+      }
+    }
+    CliState::GetInstance().SetJsonData(data);
+    return;
+  }
+
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("Id"),
       ftxui::paragraph("Name"),
@@ -1559,6 +1720,11 @@ void ShowIndexParameter(dingodb::pb::common::IndexParameter& index_parameter) {
 }
 
 void Pretty::Show(const dingodb::pb::meta::TableDefinitionWithId& table_definition_with_id) {
+  if (dingodb::cli::IsJsonOutput()) {
+    CliState::GetInstance().SetJsonDataFromProto(table_definition_with_id);
+    return;
+  }
+
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("TableId"),
       ftxui::paragraph("TenantId"),
@@ -1596,6 +1762,9 @@ void Pretty::Show(const dingodb::pb::meta::TableDefinitionWithId& table_definiti
 
 void Pretty::Show(dingodb::pb::meta::TsoResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
 
@@ -1665,11 +1834,17 @@ void Pretty::Show(dingodb::pb::meta::GetSchemasResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   ShowSchemas(dingodb::Helper::PbRepeatedToVector(response.schemas()));
 }
 
 void Pretty::Show(dingodb::pb::meta::GetSchemaResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   std::vector<dingodb::pb::meta::Schema> schemas;
@@ -1681,6 +1856,9 @@ void Pretty::Show(dingodb::pb::meta::GetSchemaByNameResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   std::vector<dingodb::pb::meta::Schema> schemas;
   schemas.push_back(response.schema());
   ShowSchemas(schemas);
@@ -1688,6 +1866,9 @@ void Pretty::Show(dingodb::pb::meta::GetSchemaByNameResponse& response) {
 
 void Pretty::Show(dingodb::pb::meta::GetTablesBySchemaResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   if (response.table_definition_with_ids_size() == 0) {
@@ -1701,6 +1882,9 @@ void Pretty::Show(dingodb::pb::meta::GetTablesBySchemaResponse& response) {
 
 void Pretty::Show(dingodb::pb::coordinator::GetGCSafePointResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   {
@@ -1737,6 +1921,9 @@ void Pretty::Show(dingodb::pb::coordinator::GetJobListResponse& response, bool i
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("Id"),
       ftxui::paragraph("Name"),
@@ -1766,11 +1953,16 @@ void Pretty::Show(dingodb::pb::coordinator::GetJobListResponse& response, bool i
   } else {
     PrintTable(rows);
   }
-  std::cout << "Sumary: total_job_size: " << response.job_list_size() << std::endl;
+  if (!dingodb::cli::GetOptions().quiet) {
+    std::cout << "Sumary: total_job_size: " << response.job_list_size() << std::endl;
+  }
 }
 
 void Pretty::Show(dingodb::pb::coordinator::GetExecutorMapResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   std::vector<std::vector<ftxui::Element>> rows = {{
@@ -1810,6 +2002,9 @@ void Pretty::Show(dingodb::pb::coordinator::QueryRegionResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   std::vector<std::vector<std::string>> rows = {
       {"Id", "Epoch", "Type", "State", "LeaderStoreId", "CreateTime", "StartKey", "EndKey", "TableId", "SchemaId",
        "TenantId"}};
@@ -1835,6 +2030,9 @@ void Pretty::Show(dingodb::pb::index::VectorGetBorderIdResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("Id"),
   }};
@@ -1847,6 +2045,9 @@ void Pretty::Show(dingodb::pb::index::VectorGetBorderIdResponse& response) {
 
 void Pretty::Show(dingodb::pb::index::VectorCountResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   std::vector<std::vector<ftxui::Element>> rows = {{
@@ -1874,6 +2075,9 @@ void Pretty::Show(dingodb::pb::index::VectorCalcDistanceResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("InternalDistence"),
   }};
@@ -1888,11 +2092,16 @@ void Pretty::Show(dingodb::pb::index::VectorCalcDistanceResponse& response) {
     rows.push_back(row);
   }
   PrintTable(rows);
-  std::cout << "Summary: distance size: " << response.distances_size() << std::endl;
+  if (!dingodb::cli::GetOptions().quiet) {
+    std::cout << "Summary: distance size: " << response.distances_size() << std::endl;
+  }
 }
 
 void Pretty::Show(dingodb::pb::index::VectorGetRegionMetricsResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   std::vector<std::vector<ftxui::Element>> rows = {{
@@ -1918,6 +2127,9 @@ void Pretty::Show(dingodb::pb::index::VectorGetRegionMetricsResponse& response) 
 
 void Pretty::Show(dingodb::pb::meta::GetTenantsResponse& response) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
   std::vector<std::vector<ftxui::Element>> rows = {{
@@ -1946,6 +2158,9 @@ void Pretty::Show(dingodb::pb::coordinator::CreateIdsResponse& response) {
   if (ShowError(response.error())) {
     return;
   }
+  if (HandleJsonOutput(response)) {
+    return;
+  }
 
   std::vector<std::vector<ftxui::Element>> rows = {{
       ftxui::paragraph("ID"),
@@ -1961,6 +2176,9 @@ void Pretty::Show(dingodb::pb::coordinator::CreateIdsResponse& response) {
 
 void Pretty::Show(dingodb::pb::store::TxnScanResponse& response, bool /*calc_count*/) {
   if (ShowError(response.error())) {
+    return;
+  }
+  if (HandleJsonOutput(response)) {
     return;
   }
 

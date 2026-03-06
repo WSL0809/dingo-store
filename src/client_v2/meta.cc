@@ -639,7 +639,7 @@ void SetUpMetaHello(CLI::App &app) {
 
 void RunMetaHello(MetaHelloOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::HelloRequest request;
   dingodb::pb::meta::HelloResponse response;
@@ -667,7 +667,7 @@ void SetUpGetTenant(CLI::App &app) {
 
 void RunGetTenant(GetTenantOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   if (opt.source == 1) {
@@ -723,7 +723,7 @@ void SetUpGetSchema(CLI::App &app) {
 
 void RunGetSchema(GetSchemaOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::Schema schema;
   auto status = GetSchemaDefinition(opt.tenant_id, opt.schema_id, schema);
@@ -743,7 +743,7 @@ void SetUpGetSchemas(CLI::App &app) {
 
 void RunGetSchemas(GetSchemasOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   std::vector<dingodb::pb::meta::Schema> schemas;
   auto status = GetSchemasDefinition(opt.tenant_id, schemas);
@@ -764,7 +764,7 @@ void SetUpGetSchemaByName(CLI::App &app) {
 
 void RunGetSchemaByName(GetSchemaByNameOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetSchemaByNameRequest request;
   dingodb::pb::meta::GetSchemaByNameResponse response;
@@ -788,7 +788,7 @@ void SetUpGetTablesBySchema(CLI::App &app) {
 
 void RunGetTablesBySchema(GetTablesBySchemaOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetTablesBySchemaRequest request;
   dingodb::pb::meta::GetTablesBySchemaResponse response;
@@ -818,7 +818,7 @@ void SetUpGetTablesCount(CLI::App &app) {
 
 void RunGetTablesCount(GetTablesCountOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetTablesCountRequest request;
   dingodb::pb::meta::GetTablesCountResponse response;
@@ -858,7 +858,7 @@ void SetUpCreateTable(CLI::App &app) {
 
 void RunCreateTable(CreateTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateTableRequest request;
   dingodb::pb::meta::CreateTableResponse response;
@@ -1003,7 +1003,7 @@ void SetUpCreateTableIds(CLI::App &app) {
 
 void RunCreateTableIds(CreateTableIdsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateTableIdsRequest request;
   dingodb::pb::meta::CreateTableIdsResponse response;
@@ -1031,7 +1031,7 @@ void SetUpCreateTableId(CLI::App &app) {
 
 void RunCreateTableId(CreateTableIdOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateTableIdRequest request;
   dingodb::pb::meta::CreateTableIdResponse response;
@@ -1057,7 +1057,7 @@ void SetUpDropTable(CLI::App &app) {
 
 void RunDropTable(DropTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropTableRequest request;
   dingodb::pb::meta::DropTableResponse response;
@@ -1097,7 +1097,7 @@ void SetUpCreateSchema(CLI::App &app) {
 
 void RunCreateSchema(CreateSchemaOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateSchemaRequest request;
   dingodb::pb::meta::CreateSchemaResponse response;
@@ -1132,7 +1132,7 @@ void SetUpDropSchema(CLI::App &app) {
 
 void RunDropSchema(DropSchemaOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropSchemaRequest request;
   dingodb::pb::meta::DropSchemaResponse response;
@@ -1166,7 +1166,7 @@ void SetUpGetTable(CLI::App &app) {
 
 void RunGetTable(GetTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::TableDefinitionWithId table_definition_with_id;
   auto status = GetTableOrIndexDefinition(opt.id, table_definition_with_id);
@@ -1189,7 +1189,7 @@ void SetUpGetTableByName(CLI::App &app) {
 
 void RunGetTableByName(GetTableByNameOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::TableDefinitionWithId table_definition_with_id;
   auto status = GetTableOrIndexDefinition(opt.name, opt.schema_id, table_definition_with_id);
@@ -1209,7 +1209,7 @@ void SetUpGetTableRange(CLI::App &app) {
 
 void RunGetTableRange(GetTableRangeOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetTableRangeRequest request;
   dingodb::pb::meta::GetTableRangeResponse response;
@@ -1246,7 +1246,7 @@ void SetUpGetTableMetrics(CLI::App &app) {
 
 void RunGetTableMetrics(GetTableMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetTableMetricsRequest request;
   dingodb::pb::meta::GetTableMetricsResponse response;
@@ -1274,7 +1274,7 @@ void SetUpSwitchAutoSplit(CLI::App &app) {
 
 void RunSwitchAutoSplit(SwitchAutoSplitOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::SwitchAutoSplitRequest request;
   dingodb::pb::meta::SwitchAutoSplitResponse response;
@@ -1304,7 +1304,7 @@ void SetUpGetDeletedTable(CLI::App &app) {
 
 void RunGetDeletedTable(GetDeletedTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetDeletedTableRequest request;
   dingodb::pb::meta::GetDeletedTableResponse response;
@@ -1335,7 +1335,7 @@ void SetUpGetDeletedIndex(CLI::App &app) {
 
 void RunGetDeletedIndex(GetDeletedIndexOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetDeletedIndexRequest request;
   dingodb::pb::meta::GetDeletedIndexResponse response;
@@ -1366,7 +1366,7 @@ void SetUpCleanDeletedTable(CLI::App &app) {
 
 void RunCleanDeletedTable(CleanDeletedTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CleanDeletedTableRequest request;
   dingodb::pb::meta::CleanDeletedTableResponse response;
@@ -1392,7 +1392,7 @@ void SetUpCleanDeletedIndex(CLI::App &app) {
 
 void RunCleanDeletedIndex(CleanDeletedIndexOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CleanDeletedIndexRequest request;
   dingodb::pb::meta::CleanDeletedIndexResponse response;
@@ -1420,7 +1420,7 @@ void SetUpCreateTenant(CLI::App &app) {
 
 void RunCreateTenant(CreateTenantOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateTenantRequest request;
   dingodb::pb::meta::CreateTenantResponse response;
@@ -1451,7 +1451,7 @@ void SetUpUpdateTenant(CLI::App &app) {
 
 void RunUpdateTenant(UpdateTenantOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::UpdateTenantRequest request;
   dingodb::pb::meta::UpdateTenantResponse response;
@@ -1480,7 +1480,7 @@ void SetUpDropTenant(CLI::App &app) {
 
 void RunDropTenant(DropTenantOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropTenantRequest request;
   dingodb::pb::meta::DropTenantResponse response;
@@ -1508,7 +1508,7 @@ void SetUpGetIndexes(CLI::App &app) {
 
 void RunGetIndexes(GetIndexesOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexesRequest request;
   dingodb::pb::meta::GetIndexesResponse response;
@@ -1545,7 +1545,7 @@ void SetUpGetIndexesCount(CLI::App &app) {
 
 void RunGetIndexesCount(GetIndexesCountOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexesCountRequest request;
   dingodb::pb::meta::GetIndexesCountResponse response;
@@ -1570,7 +1570,7 @@ void SetUpCreateIndexId(CLI::App &app) {
 }
 void RunCreateIndexId(CreateIndexIdOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateIndexIdRequest request;
   dingodb::pb::meta::CreateIndexIdResponse response;
@@ -1596,7 +1596,7 @@ void SetUpUpdateIndex(CLI::App &app) {
 }
 void RunUpdateIndex(UpdateIndexOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexRequest get_request;
   dingodb::pb::meta::GetIndexResponse get_response;
@@ -1664,7 +1664,7 @@ void SetUpDropIndex(CLI::App &app) {
 }
 void RunDropIndex(DropIndexOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropIndexRequest request;
   dingodb::pb::meta::DropIndexResponse response;
@@ -1690,7 +1690,7 @@ void SetUpGetIndex(CLI::App &app) {
 }
 void RunGetIndex(GetIndexOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexRequest request;
   dingodb::pb::meta::GetIndexResponse response;
@@ -1717,7 +1717,7 @@ void SetUpGetIndexByName(CLI::App &app) {
 }
 void RunGetIndexByName(GetIndexByNameOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexByNameRequest request;
   dingodb::pb::meta::GetIndexByNameResponse response;
@@ -1742,7 +1742,7 @@ void SetUpGetIndexRange(CLI::App &app) {
 }
 void RunGetIndexRange(GetIndexRangeOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexRangeRequest request;
   dingodb::pb::meta::GetIndexRangeResponse response;
@@ -1775,7 +1775,7 @@ void SetUpGetIndexMetrics(CLI::App &app) {
 }
 void RunGetIndexMetrics(GetIndexMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetIndexMetricsRequest request;
   dingodb::pb::meta::GetIndexMetricsResponse response;
@@ -1800,7 +1800,7 @@ void SetUpGenerateTableIds(CLI::App &app) {
 }
 void RunGenerateTableIds(GenerateTableIdsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GenerateTableIdsRequest request;
   dingodb::pb::meta::GenerateTableIdsResponse response;
@@ -1842,7 +1842,7 @@ void SetUpCreateTables(CLI::App &app) {
 }
 void RunCreateTables(CreateTablesOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   bool with_table_id = false;
   bool with_increment = false;
@@ -1975,7 +1975,7 @@ void SetUpUpdateTables(CLI::App &app) {
 }
 void RunUpdateTables(UpdateTablesOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   bool with_increment = false;
 
@@ -2093,7 +2093,7 @@ void SetUpAddIndexOnTable(CLI::App &app) {
 }
 void RunAddIndexOnTable(AddIndexOnTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   bool with_increment = false;
 
@@ -2205,7 +2205,7 @@ void SetUpDropIndexOnTable(CLI::App &app) {
 }
 void RunDropIndexOnTable(DropIndexOnTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropIndexOnTableRequest request;
   dingodb::pb::meta::DropIndexOnTableResponse response;
@@ -2231,7 +2231,7 @@ void SetUpGetTables(CLI::App &app) {
 
 void RunGetTables(GetTablesOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetTablesRequest request;
   dingodb::pb::meta::GetTablesResponse response;
@@ -2259,7 +2259,7 @@ void SetUpDropTables(CLI::App &app) {
 
 void RunDropTables(DropTablesOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DropTablesRequest request;
   dingodb::pb::meta::DropTablesResponse response;
@@ -2284,7 +2284,7 @@ void SetUpGetAutoIncrements(CLI::App &app) {
 
 void RunGetAutoIncrements(GetAutoIncrementsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetAutoIncrementsRequest request;
   dingodb::pb::meta::GetAutoIncrementsResponse response;
@@ -2305,7 +2305,7 @@ void SetUpGetAutoIncrement(CLI::App &app) {
 
 void RunGetAutoIncrement(GetAutoIncrementOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GetAutoIncrementRequest request;
   dingodb::pb::meta::GetAutoIncrementResponse response;
@@ -2331,7 +2331,7 @@ void SetUpCreateAutoIncrement(CLI::App &app) {
 
 void RunCreateAutoIncrement(CreateAutoIncrementOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateAutoIncrementRequest request;
   dingodb::pb::meta::CreateAutoIncrementResponse response;
@@ -2361,7 +2361,7 @@ void SetUpUpdateAutoIncrement(CLI::App &app) {
 
 void RunUpdateAutoIncrement(UpdateAutoIncrementOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::UpdateAutoIncrementRequest request;
   dingodb::pb::meta::UpdateAutoIncrementResponse response;
@@ -2400,7 +2400,7 @@ void SetUpGenerateAutoIncrement(CLI::App &app) {
 
 void RunGenerateAutoIncrement(GenerateAutoIncrementOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::GenerateAutoIncrementRequest request;
   dingodb::pb::meta::GenerateAutoIncrementResponse response;
@@ -2431,7 +2431,7 @@ void SetUpDeleteAutoIncrement(CLI::App &app) {
 
 void RunDeleteAutoIncrement(DeleteAutoIncrementOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::DeleteAutoIncrementRequest request;
   dingodb::pb::meta::DeleteAutoIncrementResponse response;
@@ -2458,7 +2458,7 @@ void SetUpListWatch(CLI::App &app) {
 
 void RunListWatch(ListWatchOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::ListWatchRequest request;
   dingodb::pb::meta::ListWatchResponse response;
@@ -2492,7 +2492,7 @@ void SetUpCreateWatch(CLI::App &app) {
 
 void RunCreateWatch(CreateWatchOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::WatchRequest request;
   dingodb::pb::meta::WatchResponse response;
@@ -2565,7 +2565,7 @@ void SetUpCancelWatch(CLI::App &app) {
 
 void RunCancelWatch(CancelWatchOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::WatchRequest request;
   dingodb::pb::meta::WatchResponse response;
@@ -2591,7 +2591,7 @@ void SetUpProgressWatch(CLI::App &app) {
 
 void RunProgressWatch(ProgressWatchOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::WatchRequest request;
   dingodb::pb::meta::WatchResponse response;
@@ -2624,7 +2624,7 @@ void SetUpGenTso(CLI::App &app) {
 
 void RunGenTso(GenTsoOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::TsoRequest request;
   dingodb::pb::meta::TsoResponse response;
@@ -2650,7 +2650,7 @@ void SetUpResetTso(CLI::App &app) {
 
 void RunResetTso(ResetTsoOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::TsoRequest request;
   dingodb::pb::meta::TsoResponse response;
@@ -2689,7 +2689,7 @@ void SetUpUpdateTso(CLI::App &app) {
 
 void RunUpdateTso(UpdateTsoOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::TsoRequest request;
   dingodb::pb::meta::TsoResponse response;
@@ -2730,7 +2730,7 @@ void SetUpGetRegionByTable(CLI::App &app) {
 
 void RunGetRegionByTable(GetRegionByTableOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   if (opt.table_id == 0 && opt.table_name.empty()) {
     std::cout << "Must set table_id or table_name." << std::endl;
@@ -2793,7 +2793,7 @@ void SetUpCreateIds(CLI::App &app) {
 
 void RunCreateIds(CreateIdsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CreateIdsRequest request;
   dingodb::pb::coordinator::CreateIdsResponse response;
@@ -2838,7 +2838,7 @@ void SetUpImportMeta(CLI::App &app) {
 
 void RunImportMeta(const ImportMetaOptions &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   std::map<std::string, std::string> internal_coordinator_sdk_meta_kvs;
@@ -2938,7 +2938,7 @@ void SetUpExportMeta(CLI::App &app) {
 
 void RunExportMeta(const ExportMetaOptions &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::ExportMetaRequest request;
   dingodb::pb::meta::ExportMetaResponse response;

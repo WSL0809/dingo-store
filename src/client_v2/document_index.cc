@@ -16,6 +16,7 @@
 
 #include <cstdint>
 
+#include "client_v2/cli_state.h"
 #include "client_v2/coordinator.h"
 #include "client_v2/pretty.h"
 #include "common/helper.h"
@@ -42,7 +43,7 @@ void SetUpDocumentIndexSubCommands(CLI::App& app) {
 
 static bool SetUpStore(const std::string& url, const std::vector<std::string>& addrs, int64_t region_id) {
   if (Helper::SetUp(url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   if (!addrs.empty()) {
     return client_v2::InteractionManager::GetInstance().CreateStoreInteraction(addrs);
@@ -514,7 +515,7 @@ void SetUpCreateDocumentIndex(CLI::App& app) {
 }
 void RunCreateDocumentIndex(CreateDocumentIndexOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateIndexRequest request;
   dingodb::pb::meta::CreateIndexResponse response;
@@ -640,7 +641,7 @@ void SetUpDocumentDelete(CLI::App& app) {
 
 void RunDocumentDelete(DocumentDeleteOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentDelete(opt);
 }
@@ -663,7 +664,7 @@ void SetUpDocumentAdd(CLI::App& app) {
 
 void RunDocumentAdd(DocumentAddOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentAdd(opt);
 }
@@ -686,7 +687,7 @@ void SetUpDocumentBatchAdd(CLI::App& app) {
 
 void RunDocumentBatchAdd(DocumentBatchAddOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentBatchAdd(opt);
 }
@@ -707,7 +708,7 @@ void SetUpDocumentSearch(CLI::App& app) {
 
 void RunDocumentSearch(DocumentSearchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentSearch(opt);
 }
@@ -727,7 +728,7 @@ void SetUpDocumentSearchAll(CLI::App& app) {
 
 void RunDocumentSearchAll(DocumentSearchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentSearchAll(opt);
 }
@@ -747,7 +748,7 @@ void SetUpDocumentBatchQuery(CLI::App& app) {
 
 void RunDocumentBatchQuery(DocumentBatchQueryOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentBatchQuery(opt);
 }
@@ -772,7 +773,7 @@ void SetUpDocumentScanQuery(CLI::App& app) {
 
 void RunDocumentScanQuery(DocumentScanQueryOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentScanQuery(opt);
 }
@@ -787,7 +788,7 @@ void SetUpDocumentGetMaxId(CLI::App& app) {
 
 void RunDocumentGetMaxId(DocumentGetMaxIdOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentGetMaxId(opt);
 }
@@ -802,7 +803,7 @@ void SetUpDocumentGetMinId(CLI::App& app) {
 
 void RunDocumentGetMinId(DocumentGetMinIdOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentGetMinId(opt);
 }
@@ -819,7 +820,7 @@ void SetUpDocumentCount(CLI::App& app) {
 
 void RunDocumentCount(DocumentCountOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentCount(opt);
 }
@@ -834,7 +835,7 @@ void SetUpDocumentGetRegionMetrics(CLI::App& app) {
 
 void RunDocumentGetRegionMetrics(DocumentGetRegionMetricsOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDocumentGetRegionMetrics(opt);
 }

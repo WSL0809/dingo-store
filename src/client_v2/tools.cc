@@ -21,6 +21,7 @@
 #include "client_v2/helper.h"
 #include "client_v2/meta.h"
 #include "client_v2/pretty.h"
+#include "common/cli_options.h"
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/tso.h"
@@ -35,6 +36,8 @@
 #include "serial/schema/long_schema.h"
 #include "vector/codec.h"
 namespace client_v2 {
+
+static bool IsJsonOutput() { return dingodb::cli::IsJsonOutput(); }
 
 void SetUpToolSubCommands(CLI::App &app) {
   SetUpStringToHex(app);
@@ -74,7 +77,14 @@ void SetUpStringToHex(CLI::App &app) {
 }
 
 void RunStringToHex(StringToHexOptions const &opt) {
-  auto str = client_v2::StringToHex(opt.key);
+  const auto str = client_v2::StringToHex(opt.key);
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"input", opt.key},
+        {"output", str},
+    });
+    return;
+  }
   std::cout << fmt::format("key: {} to hex: {}", opt.key, str) << std::endl;
 }
 
@@ -86,7 +96,14 @@ void SetUpHexToString(CLI::App &app) {
 }
 
 void RunHexToString(HexToStringOptions const &opt) {
-  auto str = client_v2::HexToString(opt.key);
+  const auto str = client_v2::HexToString(opt.key);
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"input", opt.key},
+        {"output", str},
+    });
+    return;
+  }
   std::cout << fmt::format("hex: {} to key: {}", opt.key, str) << std::endl;
 }
 
@@ -113,6 +130,16 @@ void RunEncodeTablePrefixToHexr(EncodeTablePrefixToHexOptions const &opt) {
   } else {
     region_header = client_v2::TablePrefixToHex(opt.region_prefix, opt.part_id, key);
   }
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"region_prefix", opt.region_prefix},
+        {"part_id", opt.part_id},
+        {"input_key", opt.key},
+        {"input_key_is_hex", opt.key_is_hex},
+        {"output", region_header},
+    });
+    return;
+  }
   std::cout << fmt::format("prefix: {} part_id: {}, key: {} to key: {}", opt.region_prefix, opt.part_id, opt.key,
                            region_header)
             << std::endl;
@@ -135,6 +162,15 @@ void RunEncodeVectorPrefixToHex(EncodeVectorPrefixToHexOptions const &opt) {
   } else {
     region_header = client_v2::VectorPrefixToHex(opt.region_prefix, opt.part_id, opt.vector_id);
   }
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"region_prefix", opt.region_prefix},
+        {"part_id", opt.part_id},
+        {"vector_id", opt.vector_id},
+        {"output", region_header},
+    });
+    return;
+  }
   std::cout << fmt::format("prefix: {} part_id: {}, vector_id {} to key(hex): [{}]", opt.region_prefix, opt.part_id,
                            opt.vector_id, region_header)
             << std::endl;
@@ -155,7 +191,17 @@ void RunDecodeTablePrefix(DecodeTablePrefixOptions const &opt) {
     key = client_v2::StringToHex(opt.key);
   }
   bool has_part_id = opt.part_id > 0;
-  std::cout << fmt::format("hex: {} to key: {}", opt.key, client_v2::HexToTablePrefix(key, has_part_id)) << std::endl;
+  const auto output = client_v2::HexToTablePrefix(key, has_part_id);
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"input", opt.key},
+        {"input_is_hex", opt.key_is_hex},
+        {"part_id", opt.part_id},
+        {"output", output},
+    });
+    return;
+  }
+  std::cout << fmt::format("hex: {} to key: {}", opt.key, output) << std::endl;
 }
 
 void SetUpDecodeVectorPrefix(CLI::App &app) {
@@ -171,7 +217,16 @@ void RunDecodeVectorPrefix(DecodeVectorPrefixOptions const &opt) {
   if (!opt.key_is_hex) {
     key = client_v2::StringToHex(opt.key);
   }
-  std::cout << fmt::format("hex: {} to key: {}", opt.key, client_v2::HexToVectorPrefix(key)) << std::endl;
+  const auto output = client_v2::HexToVectorPrefix(key);
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"input", opt.key},
+        {"input_is_hex", opt.key_is_hex},
+        {"output", output},
+    });
+    return;
+  }
+  std::cout << fmt::format("hex: {} to key: {}", opt.key, output) << std::endl;
 }
 
 void SetUpOctalToHex(CLI::App &app) {
@@ -182,7 +237,14 @@ void SetUpOctalToHex(CLI::App &app) {
 }
 
 void RunOctalToHex(OctalToHexOptions const &opt) {
-  auto str = client_v2::OctalToHex(opt.key);
+  const auto str = client_v2::OctalToHex(opt.key);
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"input", opt.key},
+        {"output", str},
+    });
+    return;
+  }
   std::cout << fmt::format("hex: {} to key: {}", opt.key, str) << std::endl;
 }
 
@@ -230,6 +292,18 @@ void RunCoordinatorDebug(CoordinatorDebugOptions const &opt) {
 
   std::vector<uint8_t> half = dingodb::Helper::DivideByteArrayByTwo(start_vec);
 
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"start_key_hex", dingodb::Helper::StringToHex(start_key)},
+        {"end_key_hex", dingodb::Helper::StringToHex(end_key)},
+        {"half_diff_hex", dingodb::Helper::StringToHex(std::string(half_diff.begin(), half_diff.end()))},
+        {"half_hex", dingodb::Helper::StringToHex(std::string(half.begin(), half.end()))},
+        {"real_mid_hex", dingodb::Helper::StringToHex(real_mid)},
+        {"encoded_test", dingodb::Helper::StringToHex(encode_result)},
+    });
+    return;
+  }
+
   std::cout << "start_key:    " << dingodb::Helper::StringToHex(start_key) << std::endl;
   std::cout << "end_key:      " << dingodb::Helper::StringToHex(end_key) << std::endl;
   std::cout << "half_diff:    " << dingodb::Helper::StringToHex(std::string(half_diff.begin(), half_diff.end()))
@@ -251,6 +325,13 @@ void RunTransformTimeStamp(TransformTimeStampOptions const &opt) {
   std::tm *tm_ptr = std::localtime(&time);
   std::ostringstream oss;
   oss << std::put_time(tm_ptr, "%Y-%m-%dT%H:%M:%SZ");  // RFC 3339
+  if (IsJsonOutput()) {
+    CliState::GetInstance().SetJsonData({
+        {"ts", opt.ts},
+        {"output", oss.str()},
+    });
+    return;
+  }
   std::cout << oss.str();
 }
 
@@ -351,7 +432,7 @@ void SetUpGenPlainKey(CLI::App &app) {
 
 void RunGenPlainKey(GenPlainKeyOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   auto status = GenPlainKey(opt);

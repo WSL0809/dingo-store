@@ -248,7 +248,7 @@ void SetUpKvHello(CLI::App& app) {
 
 void RunKvHello(KvHelloOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::HelloRequest request;
   dingodb::pb::version::HelloResponse response;
@@ -278,7 +278,7 @@ void SetUpGetRawKvIndex(CLI::App& app) {
 
 void RunGetRawKvIndex(GetRawKvIndexOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::GetRawKvIndexRequest request;
   dingodb::pb::version::GetRawKvIndexResponse response;
@@ -306,7 +306,7 @@ void SetUpGetRawKvRev(CLI::App& app) {
 
 void RunGetRawKvRev(GetRawKvRevOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::GetRawKvRevRequest request;
   dingodb::pb::version::GetRawKvRevResponse response;
@@ -342,7 +342,7 @@ void SetUpCoorKvRange(CLI::App& app) {
 
 void RunCoorKvRange(CoorKvRangeOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::RangeRequest request;
   dingodb::pb::version::RangeResponse response;
@@ -384,7 +384,7 @@ void SetUpCoorKvPut(CLI::App& app) {
 
 void RunCoorKvPut(CoorKvPutOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::PutRequest request;
   dingodb::pb::version::PutResponse response;
@@ -422,7 +422,7 @@ void SetUpCoorKvDeleteRange(CLI::App& app) {
 
 void RunCoorKvDeleteRange(CoorKvDeleteRangeOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::DeleteRangeRequest request;
   dingodb::pb::version::DeleteRangeResponse response;
@@ -453,7 +453,7 @@ void SetUpCoorKvCompaction(CLI::App& app) {
 
 void RunCoorKvCompaction(CoorKvCompactionOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::CompactionRequest request;
   dingodb::pb::version::CompactionResponse response;
@@ -494,7 +494,7 @@ void SetUpOneTimeWatch(CLI::App& app) {
 
 void RunOneTimeWatch(OneTimeWatchOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::WatchRequest request;
   dingodb::pb::version::WatchResponse response;
@@ -539,7 +539,7 @@ void SetUpLock(CLI::App& app) {
 
 void RunLock(LockOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   std::string lock_prefix = opt.lock_name + "_lock_";
@@ -621,7 +621,7 @@ void SetUpLeaseGrant(CLI::App& app) {
 
 void RunLeaseGrant(LeaseGrantOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::LeaseGrantRequest request;
   dingodb::pb::version::LeaseGrantResponse response;
@@ -649,7 +649,7 @@ void SetUpLeaseRevoke(CLI::App& app) {
 
 void RunLeaseRevoke(LeaseRevokeOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::LeaseRevokeRequest request;
   dingodb::pb::version::LeaseRevokeResponse response;
@@ -677,7 +677,7 @@ void SetUpLeaseRenew(CLI::App& app) {
 
 void RunLeaseRenew(LeaseRenewOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::LeaseRenewRequest request;
   dingodb::pb::version::LeaseRenewResponse response;
@@ -704,7 +704,7 @@ void SetUpLeaseQuery(CLI::App& app) {
 
 void RunLeaseQuery(LeaseQueryOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::LeaseQueryRequest request;
   dingodb::pb::version::LeaseQueryResponse response;
@@ -731,7 +731,7 @@ void SetUpListLeases(CLI::App& app) {
 
 void RunListLeases(ListLeasesOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::version::ListLeasesRequest request;
   dingodb::pb::version::ListLeasesResponse response;

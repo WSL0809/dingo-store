@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,7 @@
 #include "brpc/channel.h"
 #include "brpc/controller.h"
 #include "bthread/bthread.h"
+#include "client_v2/cli_state.h"
 #include "client_v2/coordinator.h"
 #include "client_v2/document_index.h"
 #include "client_v2/dump.h"
@@ -40,6 +42,7 @@
 #include "client_v2/store.h"
 #include "client_v2/tools.h"
 #include "client_v2/vector_index.h"
+#include "common/cli_options.h"
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/version.h"
@@ -51,12 +54,48 @@
 const std::string kProgramName = "dingodb_cli";
 const std::string kProgramDesc = "dingodb-cli client tool.";
 
+struct RootCliOptions {
+  std::string format = "auto";
+};
+
+void SetUpRootOptions(CLI::App& app, RootCliOptions& root_options) {
+  auto& options = dingodb::cli::GetOptions();
+
+  auto* format_option =
+      app.add_option("--format", root_options.format, "Output format: auto|table|plain|json")
+          ->default_val("auto")
+          ->check(CLI::IsMember({"auto", "table", "plain", "json"}, CLI::ignore_case));
+  format_option->each(
+      [](const std::string& value) { dingodb::cli::GetOptions().format = dingodb::cli::ParseOutputFormat(value); });
+
+  app.add_flag("--no-color", options.no_color, "Disable colored table output.");
+  app.add_flag("--quiet", options.quiet, "Reduce non-essential output.");
+  app.add_option("--timeout-ms,--timeout", options.timeout_ms, "RPC timeout in milliseconds.")->default_val(60000);
+  app.add_option("--retry", options.max_retry, "RPC retry count.")->default_val(5);
+  app.add_flag("--json-pretty", options.json_pretty, "Pretty print JSON output.");
+}
+
+void BootstrapFormatFromArgv(int argc, char* argv[]) {
+  auto& options = dingodb::cli::GetOptions();
+  for (int i = 1; i < argc; ++i) {
+    const std::string argument = argv[i];
+    if (argument.rfind("--format=", 0) == 0) {
+      options.format = dingodb::cli::ParseOutputFormat(argument.substr(std::string("--format=").size()));
+      return;
+    }
+    if (argument == "--format" && i + 1 < argc) {
+      options.format = dingodb::cli::ParseOutputFormat(argv[i + 1]);
+      return;
+    }
+  }
+}
+
 void PrintSubcommandHelp(const CLI::App& app, const std::string& subcommand_name) {
   try {
     CLI::App* subcommand = app.get_subcommand(subcommand_name);
     std::cout << subcommand->help() << std::endl;
   } catch (const CLI::OptionNotFound& e) {
-    std::cout << "\n >Not found command: " << subcommand_name << std::endl;
+    std::cerr << "\n >Not found command: " << subcommand_name << std::endl;
   }
 }
 
@@ -191,7 +230,7 @@ int InteractiveCli(CLI::App& app) {
     try {
       app.parse(argv.size() - 1, argv.data());
     } catch (const CLI::ParseError& e) {
-      std::cout << "Error: " << e.what() << std::endl;
+      std::cerr << "Error: " << e.what() << std::endl;
     }
   }
 
@@ -199,9 +238,8 @@ int InteractiveCli(CLI::App& app) {
 }
 
 void InitLog(const std::string& log_dir) {
-  if (!dingodb::Helper::IsExistPath(log_dir)) {
-    dingodb::Helper::CreateDirectories(log_dir);
-  }
+  std::error_code error_code;
+  std::filesystem::create_directories(log_dir, error_code);
 
   FLAGS_logbufsecs = 0;
   FLAGS_stop_logging_if_full_disk = true;
@@ -220,10 +258,16 @@ void InitLog(const std::string& log_dir) {
 }
 
 int main(int argc, char* argv[]) {
+  dingodb::cli::ResetOptions();
+  client_v2::CliState::GetInstance().Reset();
+  BootstrapFormatFromArgv(argc, argv);
   InitLog("./log");
+
+  RootCliOptions root_options;
 
   CLI::App app{kProgramDesc, kProgramName};
   app.get_formatter()->column_width(40);
+  SetUpRootOptions(app, root_options);
   client_v2::SetUpCoordinatorSubCommands(app);
   client_v2::SetUpKVSubCommands(app);
   client_v2::SetUpMetaSubCommands(app);
@@ -233,12 +277,69 @@ int main(int argc, char* argv[]) {
   client_v2::SetUpVectorIndexSubCommands(app);
   client_v2::SetUpRestoreSubCommands(app);
 
-  if (argc > 1) {
-    CLI11_PARSE(app, argc, argv);
-
-  } else {
+  auto* shell_cmd = app.add_subcommand("Shell", "Enter interactive CLI shell");
+  shell_cmd->callback([&app]() {
+    if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
+      client_v2::CliState::GetInstance().MarkUsageError("Shell command requires interactive TTY input/output.");
+      return;
+    }
     InteractiveCli(app);
+  });
+
+  if (argc <= 1) {
+    std::cout << app.help() << std::endl;
+    return 2;
   }
 
-  return 0;
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& e) {
+    if (dingodb::cli::IsJsonOutput()) {
+      if (e.get_exit_code() == 0) {
+        return app.exit(e);
+      }
+      auto& state = client_v2::CliState::GetInstance();
+      state.MarkUsageError(e.what());
+      state.CaptureCommandNameFromApp(app);
+      state.EmitJsonEnvelope();
+      return 2;
+    }
+    const int code = app.exit(e);
+    return code == 0 ? 0 : 2;
+  } catch (const client_v2::CliExitException& e) {
+    auto& state = client_v2::CliState::GetInstance();
+    state.SetExitCode(e.code() == 0 ? 1 : e.code());
+    std::string message = e.what();
+    if (message.empty()) {
+      message = "Command failed.";
+    }
+    if (!state.HasError()) {
+      if (state.ExitCode() == 2) {
+        state.MarkUsageError(message);
+      } else {
+        state.MarkRuntimeError(message);
+      }
+    }
+    if (dingodb::cli::IsJsonOutput()) {
+      state.CaptureCommandNameFromApp(app);
+      state.EmitJsonEnvelope();
+    }
+    return state.ExitCode();
+  } catch (const std::exception& e) {
+    auto& state = client_v2::CliState::GetInstance();
+    state.MarkRuntimeError(e.what());
+    state.CaptureCommandNameFromApp(app);
+    if (dingodb::cli::IsJsonOutput()) {
+      state.EmitJsonEnvelope();
+    }
+    return state.ExitCode() == 0 ? 1 : state.ExitCode();
+  }
+
+  auto& state = client_v2::CliState::GetInstance();
+  state.CaptureCommandNameFromApp(app);
+  if (dingodb::cli::IsJsonOutput()) {
+    state.EmitJsonEnvelope();
+  }
+
+  return state.ExitCode();
 }

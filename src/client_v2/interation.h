@@ -29,7 +29,9 @@
 #include "brpc/controller.h"
 #include "bthread/bthread.h"
 #include "bthread/types.h"
+#include "client_v2/cli_state.h"
 #include "client_v2/router.h"
+#include "common/cli_options.h"
 #include "common/logging.h"
 #include "fmt/core.h"
 #include "proto/common.pb.h"
@@ -43,8 +45,8 @@
 
 namespace client_v2 {
 
-const int kMaxRetry = 5;
-const int64_t kTimeoutMs = 60000;
+const int kDefaultMaxRetry = 5;
+const int64_t kDefaultTimeoutMs = 60000;
 const bool kLogEachRequest = true;
 
 class ServerInteraction {
@@ -111,9 +113,12 @@ butil::Status ServerInteraction::SendRequest(const std::string& service_name, co
   }
 
   int retry_count = 0;
+  const auto& options = dingodb::cli::GetOptions();
+  const int64_t timeout_ms = options.timeout_ms > 0 ? options.timeout_ms : kDefaultTimeoutMs;
+  const int max_retry = options.max_retry >= 0 ? options.max_retry : kDefaultMaxRetry;
   do {
     brpc::Controller cntl;
-    cntl.set_timeout_ms(kTimeoutMs);
+    cntl.set_timeout_ms(timeout_ms);
     cntl.set_log_id(butil::fast_rand());
     const int leader_index = GetLeader();
     channels_[leader_index]->CallMethod(method, &cntl, &request, &response, nullptr);
@@ -131,6 +136,7 @@ butil::Status ServerInteraction::SendRequest(const std::string& service_name, co
         continue;
       }
       latency_ = cntl.latency_us();
+      CliState::GetInstance().SetExitCode(1);
       return butil::Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
@@ -146,19 +152,22 @@ butil::Status ServerInteraction::SendRequest(const std::string& service_name, co
                                         response.error().errmsg());
 
         latency_ = cntl.latency_us();
+        CliState::GetInstance().SetExitCode(1);
         return butil::Status(response.error().errcode(), response.error().errmsg());
       }
     } else {
       latency_ = cntl.latency_us();
+      CliState::GetInstance().SetJsonDataFromProto(response);
       return butil::Status();
     }
 
-  } while (retry_count < kMaxRetry);
+  } while (retry_count < max_retry);
 
   DINGO_LOG(ERROR) << fmt::format("{} response failed, error: {} {}", api_name,
                                   dingodb::pb::error::Errno_Name(response.error().errcode()),
                                   response.error().errmsg());
 
+  CliState::GetInstance().SetExitCode(1);
   return butil::Status(response.error().errcode(), response.error().errmsg());
 }
 

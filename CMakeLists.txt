@@ -139,6 +139,7 @@ file(GLOB_RECURSE SERIAL_SRCS ${PROJECT_SOURCE_DIR}/src/serial/src/*.cc)
 add_library(serial STATIC ${SERIAL_SRCS})
 
 set(CLI_SUPPORT_SRCS
+    ${PROJECT_SOURCE_DIR}/src/common/cli_options.cc
     ${PROJECT_SOURCE_DIR}/src/common/helper.cc
     ${PROJECT_SOURCE_DIR}/src/common/logging.cc
     ${PROJECT_SOURCE_DIR}/src/common/role.cc

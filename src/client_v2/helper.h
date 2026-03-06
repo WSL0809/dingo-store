@@ -28,6 +28,7 @@
 #include "bthread/bthread.h"
 #include "butil/endpoint.h"
 #include "butil/strings/string_split.h"
+#include "client_v2/cli_state.h"
 #include "client_v2/interation.h"
 #include "client_v2/router.h"
 #include "common/constant.h"
@@ -458,13 +459,14 @@ class Helper {
       path = path.replace(path.find("file://"), 7, "");
       auto addrs = Helper::GetAddrsFromFile(path);
       if (addrs.empty()) {
-        std::cout << "coor_url not find addr, path=" << path << std::endl;
+        CliState::GetInstance().MarkRuntimeError("coor_url not find addr, path=" + path);
         return -1;
       }
 
       auto coordinator_interaction = std::make_shared<ServerInteraction>();
       if (!coordinator_interaction->Init(addrs)) {
-        std::cout << "Fail to init coordinator_interaction, please check parameter --url=" << url << std::endl;
+        CliState::GetInstance().MarkRuntimeError("Fail to init coordinator_interaction, please check parameter --url=" +
+                                                 url);
         return -1;
       }
 
@@ -476,23 +478,24 @@ class Helper {
       auto coordinator_interaction = std::make_shared<dingodb::CoordinatorInteraction>();
       if (!coordinator_interaction->InitByNameService(
               url, dingodb::pb::common::CoordinatorServiceType::ServiceTypeCoordinator)) {
-        std::cout << "Fail to init coordinator_interaction, please check parameter --coor_url=" << url << std::endl;
+        CliState::GetInstance().MarkRuntimeError("Fail to init coordinator_interaction, please check parameter --coor_url=" +
+                                                 url);
         return -1;
       }
       CoordinatorInteraction::GetInstance().SetCoorinatorInteraction(coordinator_interaction);
       auto coordinator_interaction_meta = std::make_shared<dingodb::CoordinatorInteraction>();
       if (!coordinator_interaction_meta->InitByNameService(
               url, dingodb::pb::common::CoordinatorServiceType::ServiceTypeMeta)) {
-        std::cout << "Fail to init coordinator_interaction_meta, please check parameter --coor_url=" << url
-                  << std::endl;
+        CliState::GetInstance().MarkRuntimeError("Fail to init coordinator_interaction_meta, please check parameter --coor_url=" +
+                                                 url);
         return -1;
       }
       CoordinatorInteraction::GetInstance().SetCoorinatorInteractionMeta(coordinator_interaction_meta);
       auto coordinator_interaction_version = std::make_shared<dingodb::CoordinatorInteraction>();
       if (!coordinator_interaction_version->InitByNameService(
               url, dingodb::pb::common::CoordinatorServiceType::ServiceTypeVersion)) {
-        std::cout << "Fail to init coordinator_interaction_version, please check parameter --coor_url=" << url
-                  << std::endl;
+        CliState::GetInstance().MarkRuntimeError(
+            "Fail to init coordinator_interaction_version, please check parameter --coor_url=" + url);
         return -1;
       }
       CoordinatorInteraction::GetInstance().SetCoorinatorInteractionVersion(coordinator_interaction_version);

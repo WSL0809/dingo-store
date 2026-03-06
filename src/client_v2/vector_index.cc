@@ -60,7 +60,7 @@ void SetUpVectorIndexSubCommands(CLI::App& app) {
 
 static bool SetUpStore(const std::string& url, const std::vector<std::string>& addrs, int64_t region_id) {
   if (Helper::SetUp(url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   if (!addrs.empty()) {
     return client_v2::InteractionManager::GetInstance().CreateStoreInteraction(addrs);
@@ -481,7 +481,7 @@ void SendVectorAddRetry(VectorAddOptions const& opt) {  // NOLINT
         }
       } else {
         std::cout << "value_type only support float|binary , not support " << opt.value_type << std::endl;
-        exit(-1);
+        ThrowCliExit(1);
       }
 
       file.close();
@@ -540,8 +540,7 @@ void SendVectorAdd(VectorAddOptions const& opt) {
   } else if (opt.value_type == "float") {
     vector_data.value_type = ValueType::kFloat;
   } else {
-    std::cout << "value_type only support float|binary , not support " << opt.value_type << std::endl;
-    exit(-1);
+    ThrowCliExit(1, fmt::format("value_type only support float|binary, not support {}", opt.value_type));
   }
 
   if (!opt.csv_data.empty()) {
@@ -2669,7 +2668,7 @@ void SetUpCreateIndex(CLI::App& app) {
 
 void RunCreateIndex(CreateIndexOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::meta::CreateIndexRequest request;
   dingodb::pb::meta::CreateIndexResponse response;
@@ -3199,7 +3198,7 @@ void SetUpVectorSearch(CLI::App& app) {
 
 void RunVectorSearch(VectorSearchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorSearch(opt);
@@ -3244,7 +3243,7 @@ void SetUpVectorSearchDebug(CLI::App& app) {
 
 void RunVectorSearchDebug(VectorSearchDebugOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorSearchDebug(opt);
 }
@@ -3287,7 +3286,7 @@ void SetUpVectorRangeSearch(CLI::App& app) {
 
 void RunVectorRangeSearch(VectorRangeSearchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorRangeSearch(opt);
 }
@@ -3334,7 +3333,7 @@ void SetUpVectorRangeSearchDebug(CLI::App& app) {
 
 void RunVectorRangeSearchDebug(VectorRangeSearchDebugOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorRangeSearchDebug(opt);
 }
@@ -3378,7 +3377,7 @@ void SetUpVectorBatchSearch(CLI::App& app) {
 
 void RunVectorBatchSearch(VectorBatchSearchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorBatchSearch(opt);
 }
@@ -3404,7 +3403,7 @@ void SetUpVectorBatchQuery(CLI::App& app) {
 
 void RunVectorBatchQuery(VectorBatchQueryOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorBatchQuery(opt);
 }
@@ -3441,7 +3440,7 @@ void SetUpVectorScanQuery(CLI::App& app) {
 
 void RunVectorScanQuery(VectorScanQueryOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorScanQuery(opt);
@@ -3463,7 +3462,7 @@ void SetUpVectorScanDump(CLI::App& app) {
 
 void RunVectorScanDump(VectorScanDumpOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorScanDump(opt);
@@ -3479,7 +3478,7 @@ void SetUpVectorGetRegionMetrics(CLI::App& app) {
 
 void RunVectorGetRegionMetricsd(VectorGetRegionMetricsOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorGetRegionMetrics(opt);
@@ -3517,7 +3516,7 @@ void SetUpVectorAdd(CLI::App& app) {
 
 void RunVectorAdd(VectorAddOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   if (opt.table_id > 0) {
@@ -3540,7 +3539,7 @@ void SetUpVectorDelete(CLI::App& app) {
 
 void RunVectorDelete(VectorDeleteOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorDelete(opt);
@@ -3556,7 +3555,7 @@ void SetUpVectorGetMaxId(CLI::App& app) {
 
 void RunVectorGetMaxId(VectorGetMaxIdOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorGetMaxId(opt);
@@ -3572,7 +3571,7 @@ void SetUpVectorGetMinId(CLI::App& app) {
 
 void RunVectorGetMinId(VectorGetMinIdOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorGetMinId(opt);
@@ -3599,7 +3598,7 @@ void SetUpVectorAddBatch(CLI::App& app) {
 
 void RunVectorAddBatch(VectorAddBatchOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorAddBatch(opt);
@@ -3627,7 +3626,7 @@ void SetUpVectorAddBatchDebug(CLI::App& app) {
 
 void RunVectorAddBatchDebug(VectorAddBatchDebugOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorAddBatchDebug(opt);
@@ -3651,7 +3650,7 @@ void SetUpVectorCalcDistance(CLI::App& app) {
 
 void RunVectorCalcDistance(VectorCalcDistanceOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorCalcDistance(opt);
 }
@@ -3678,7 +3677,7 @@ void SetUpVectorCount(CLI::App& app) {
 
 void RunVectorCount(VectorCountOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendVectorCount(opt, true);
 }
@@ -3694,7 +3693,7 @@ void SetUpCountVectorTable(CLI::App& app) {
 
 void RunCountVectorTable(CountVectorTableOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::CountVectorTable(opt);
@@ -3721,7 +3720,7 @@ void SetUpVectorImport(CLI::App& app) {
 
 void RunVectorImport(VectorImportOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorImport(opt);
@@ -3737,7 +3736,7 @@ void SetUpVectorBuild(CLI::App& app) {
 
 void RunVectorBuild(VectorBuildOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorBuild(opt);
@@ -3768,7 +3767,7 @@ void SetUpVectorLoad(CLI::App& app) {
 
 void RunVectorLoad(VectorLoadOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorLoad(opt);
@@ -3784,7 +3783,7 @@ void SetUpVectorStatus(CLI::App& app) {
 
 void RunVectorStatus(VectorStatusOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorStatus(opt);
@@ -3803,7 +3802,7 @@ void SetUpVectorReset(CLI::App& app) {
 
 void RunVectorReset(VectorResetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorReset(opt);
@@ -3823,7 +3822,7 @@ void SetUpVectorDump(CLI::App& app) {
 
 void RunVectorDump(VectorDumpOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorDump(opt);
@@ -3839,7 +3838,7 @@ void SetUpVectorCountMemory(CLI::App& app) {
 
 void RunVectorCountMemory(VectorCountMemoryOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendVectorCountMemory(opt);
@@ -3874,7 +3873,7 @@ void SetUpIndexEnableOrDisableSplitAndMerge(CLI::App& app) {
 
 void RunIndexEnableOrDisableSplitAndMerge(IndexEnableOrDisableSplitAndMergeOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetStoreMapRequest get_store_map_request;

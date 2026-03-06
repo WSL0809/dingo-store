@@ -23,6 +23,7 @@
 
 #include "client_v2/helper.h"
 #include "client_v2/pretty.h"
+#include "common/cli_options.h"
 #include "common/helper.h"
 #include "common/logging.h"
 #include "common/version.h"
@@ -31,6 +32,11 @@
 #include "proto/coordinator.pb.h"
 
 namespace client_v2 {
+
+static int64_t GetRpcTimeoutMs() {
+  const int64_t timeout_ms = dingodb::cli::GetOptions().timeout_ms;
+  return timeout_ms > 0 ? timeout_ms : kDefaultTimeoutMs;
+}
 
 void SetUpCoordinatorSubCommands(CLI::App &app) {
   // coordinator commands
@@ -77,7 +83,7 @@ bool GetBrpcChannel(const std::string &location, brpc::Channel &channel) {
   // rpc for leader access
   if (channel.Init(node.addr, nullptr) != 0) {
     DINGO_LOG(ERROR) << "Fail to init channel to " << location;
-    bthread_usleep(kTimeoutMs * 1000L);
+    bthread_usleep(GetRpcTimeoutMs() * 1000L);
     return false;
   }
 
@@ -187,7 +193,7 @@ void SetUpGetRegionMap(CLI::App &app) {
 void RunGetRegionMap(GetRegionMapCommandOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
     std::cout << "Set Up failed coor_url=" << opt.coor_url;
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetRegionMapRequest request;
   dingodb::pb::coordinator::GetRegionMapResponse response;
@@ -301,7 +307,7 @@ void RunRaftAddPeer(RaftAddPeerCommandOptions const &opt) {
   }
 
   brpc::Controller cntl;
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   if (opt.coordinator_addr.empty()) {
     std::cout << "Please set --addr or --coordinator_addr";
@@ -352,7 +358,7 @@ void RunRaftRemovePeer(RaftRemovePeerOption const &opt) {
   }
 
   brpc::Controller cntl;
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -400,7 +406,7 @@ void RunRaftTransferLeader(RaftTransferLeaderOption const &opt) {
 
   brpc::Controller cntl;
 
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -448,7 +454,7 @@ void RunRaftSnapshot(RaftSnapshotOption const &opt) {
 
   brpc::Controller cntl;
 
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -512,7 +518,7 @@ void RunRaftResetPeer(RaftResetPeerOption const &opt) {
   }
 
   brpc::Controller cntl;
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -549,7 +555,7 @@ void RunGetNodeInfo(GetNodeInfoOption const &opt) {
   request.set_cluster_id(0);
 
   brpc::Controller cntl;
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -604,7 +610,7 @@ void RunChangeLogLevel(GetChangeLogLevelOption const &opt) {
   log_detail->set_stop_logging_if_full_disk(false);
 
   brpc::Controller cntl;
-  cntl.set_timeout_ms(kTimeoutMs);
+  cntl.set_timeout_ms(GetRpcTimeoutMs());
 
   brpc::Channel channel;
   if (!GetBrpcChannel(opt.coordinator_addr, channel)) {
@@ -631,7 +637,7 @@ void SetUpHello(CLI::App &app) {
 
 void RunHello(HelloOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::HelloRequest request;
   dingodb::pb::coordinator::HelloResponse response;
@@ -656,7 +662,7 @@ void SetUpStoreHeartbeat(CLI::App &app) {
 
 void RunStoreHeartbeat(StoreHeartbeatOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   SendStoreHearbeatV2(CoordinatorInteraction::GetInstance().GetCoorinatorInteraction(), 100);
   SendStoreHearbeatV2(CoordinatorInteraction::GetInstance().GetCoorinatorInteraction(), 200);
@@ -694,7 +700,7 @@ void SetUpCreateStore(CLI::App &app) {
 
 void RunCreateStore(CreateStoreOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CreateStoreRequest request;
   dingodb::pb::coordinator::CreateStoreResponse response;
@@ -718,7 +724,7 @@ void SetUpDeleteStore(CLI::App &app) {
 
 void RunDeleteStore(DeleteStoreOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::DeleteStoreRequest request;
   dingodb::pb::coordinator::DeleteStoreResponse response;
@@ -747,7 +753,7 @@ void SetUpUpdateStore(CLI::App &app) {
 
 void RunUpdateStore(UpdateStoreOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateStoreRequest request;
   dingodb::pb::coordinator::UpdateStoreResponse response;
@@ -786,7 +792,7 @@ void SetUpCreateExecutor(CLI::App &app) {
 
 void RunCreateExecutor(CreateExecutorOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CreateExecutorRequest request;
   dingodb::pb::coordinator::CreateExecutorResponse response;
@@ -819,7 +825,7 @@ void SetUpDeleteExecutor(CLI::App &app) {
 
 void RunDeleteExecutor(DeleteExecutorOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::DeleteExecutorRequest request;
   dingodb::pb::coordinator::DeleteExecutorResponse response;
@@ -851,7 +857,7 @@ void SetUpCreateExecutorUser(CLI::App &app) {
 
 void RunCreateExecutorUser(CreateExecutorUserOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CreateExecutorUserRequest request;
   dingodb::pb::coordinator::CreateExecutorUserResponse response;
@@ -878,7 +884,7 @@ void SetUpUpdateExecutorUser(CLI::App &app) {
 
 void RunUpdateExecutorUser(UpdateExecutorUserOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateExecutorUserRequest request;
   dingodb::pb::coordinator::UpdateExecutorUserResponse response;
@@ -904,7 +910,7 @@ void SetUpDeleteExecutorUser(CLI::App &app) {
 }
 void RunDeleteExecutorUser(DeleteExecutorUserOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::DeleteExecutorUserRequest request;
   dingodb::pb::coordinator::DeleteExecutorUserResponse response;
@@ -928,7 +934,7 @@ void SetUpGetExecutorUserMap(CLI::App &app) {
 
 void RunGetExecutorUserMap(GetExecutorUserMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetExecutorUserMapRequest request;
   dingodb::pb::coordinator::GetExecutorUserMapResponse response;
@@ -955,7 +961,7 @@ void SetUpExecutorHeartbeat(CLI::App &app) {
 
 void RunExecutorHeartbeat(ExecutorHeartbeatOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::ExecutorHeartbeatRequest request;
   dingodb::pb::coordinator::ExecutorHeartbeatResponse response;
@@ -996,7 +1002,7 @@ void SetUpGetStoreMap(CLI::App &app) {
 
 void RunGetStoreMap(GetStoreMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetStoreMapRequest request;
   dingodb::pb::coordinator::GetStoreMapResponse response;
@@ -1056,7 +1062,7 @@ void SetUpGetExecutorMap(CLI::App &app) {
 
 void RunGetExecutorMap(GetExecutorMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetExecutorMapRequest request;
   dingodb::pb::coordinator::GetExecutorMapResponse response;
@@ -1084,7 +1090,7 @@ void SetUpGetDeleteRegionMap(CLI::App &app) {
 
 void RunGetDeleteRegionMap(GetDeleteRegionMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetDeletedRegionMapRequest request;
   dingodb::pb::coordinator::GetDeletedRegionMapResponse response;
@@ -1117,7 +1123,7 @@ void SetUpAddDeleteRegionMap(CLI::App &app) {
 
 void RunAddDeleteRegionMap(AddDeleteRegionMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::AddDeletedRegionMapRequest request;
   dingodb::pb::coordinator::AddDeletedRegionMapResponse response;
@@ -1140,7 +1146,7 @@ void SetUpCleanDeleteRegionMap(CLI::App &app) {
 
 void RunCleanDeleteRegionMap(CleanDeleteRegionMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CleanDeletedRegionMapRequest request;
   dingodb::pb::coordinator::CleanDeletedRegionMapResponse response;
@@ -1161,7 +1167,7 @@ void SetUpGetRegionCount(CLI::App &app) {
 
 void RunGetRegionCount(GetRegionCountOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetRegionCountRequest request;
   dingodb::pb::coordinator::GetRegionCountResponse response;
@@ -1185,7 +1191,7 @@ void SetUpGetCoordinatorMap(CLI::App &app) {
 
 void RunGetCoordinatorMap(GetCoordinatorMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetCoordinatorMapRequest request;
   dingodb::pb::coordinator::GetCoordinatorMapResponse response;
@@ -1210,7 +1216,7 @@ void SetUpCreateRegionId(CLI::App &app) {
 
 void RunCreateRegionId(CreateRegionIdOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CreateRegionIdRequest request;
   dingodb::pb::coordinator::CreateRegionIdResponse response;
@@ -1233,7 +1239,7 @@ void SetUpQueryRegion(CLI::App &app) {
 
 void RunQueryRegion(QueryRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::QueryRegionRequest request;
   dingodb::pb::coordinator::QueryRegionResponse response;
@@ -1297,7 +1303,7 @@ void SetUpCreateRegion(CLI::App &app) {
 
 void RunCreateRegion(CreateRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   if (opt.name.empty()) {
     DINGO_LOG(ERROR) << "name is empty";
@@ -1557,7 +1563,7 @@ void SetUpCreateRegionForSplit(CLI::App &app) {
 
 void RunCreateRegionForSplit(CreateRegionForSplitOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   // query region
@@ -1618,7 +1624,7 @@ void SetUpDropRegion(CLI::App &app) {
 }
 void RunDropRegion(DropRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::DropRegionRequest request;
@@ -1643,7 +1649,7 @@ void SetUpDropRegionPermanently(CLI::App &app) {
 void RunDropRegionPermanently(DropRegionPermanentlyOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
     DINGO_LOG(ERROR) << "Set Up failed coor_url=" << opt.coor_url;
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::DropRegionPermanentlyRequest request;
@@ -1677,7 +1683,7 @@ void SetUpSplitRegion(CLI::App &app) {
 
 void RunSplitRegion(SplitRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::SplitRegionRequest request;
@@ -1794,7 +1800,7 @@ void SetUpMergeRegion(CLI::App &app) {
 
 void RunMergeRegion(MergeRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::MergeRegionRequest request;
@@ -1839,7 +1845,7 @@ void SetUpAddPeerRegion(CLI::App &app) {
 
 void RunAddPeerRegion(AddPeerRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   // get StoreMap
   dingodb::pb::coordinator::GetStoreMapRequest request;
@@ -1930,7 +1936,7 @@ void SetUpRemovePeerRegion(CLI::App &app) {
 
 void RunRemovePeerRegion(RemovePeerRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   // query region
@@ -2009,7 +2015,7 @@ void SetUpTransferLeaderRegion(CLI::App &app) {
 
 void RunTransferLeaderRegion(TransferLeaderRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   // query region
@@ -2067,7 +2073,7 @@ void SetUpGetOrphanRegion(CLI::App &app) {
 }
 void RunGetOrphanRegion(GetOrphanRegionOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetOrphanRegionRequest request;
   dingodb::pb::coordinator::GetOrphanRegionResponse response;
@@ -2102,7 +2108,7 @@ void SetUpScanRegions(CLI::App &app) {
 }
 void RunScanRegions(ScanRegionsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::ScanRegionsRequest request;
   dingodb::pb::coordinator::ScanRegionsResponse response;
@@ -2137,7 +2143,7 @@ void SetUpGetRangeRegionMap(CLI::App &app) {
 }
 void RunGetRangeRegionMap(GetRangeRegionMapOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetRangeRegionMapRequest request;
   dingodb::pb::coordinator::GetRangeRegionMapResponse response;
@@ -2162,7 +2168,7 @@ void SetUpGetStoreOperation(CLI::App &app) {
 
 void RunGetStoreOperation(GetStoreOperationOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetStoreOperationRequest request;
   dingodb::pb::coordinator::GetStoreOperationResponse response;
@@ -2211,7 +2217,7 @@ void SetUpGetJobList(CLI::App &app) {
 
 void RunGetJobList(GetJobListOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetJobListRequest request;
   dingodb::pb::coordinator::GetJobListResponse unorganized_response;
@@ -2233,7 +2239,7 @@ void RunGetJobList(GetJobListOptions const &opt) {
   } else if (sort_by.find("create_time") != std::string::npos) {
     sort_by_enum = SortBy::kSortByCreateTime;
   } else {
-    std::cout << "Invalid sort_by parameter, must be 'id' or 'name' or 'create_time'" << std::endl;
+    CliState::GetInstance().MarkUsageError("Invalid sort_by parameter, must be 'id' or 'name' or 'create_time'");
     return;
   }
 
@@ -2272,7 +2278,7 @@ void RunGetJobList(GetJobListOptions const &opt) {
   } else if (name_only.find("createregion") != std::string::npos) {
     name_only_enum = NameOnly::kCreateRegion;
   } else {
-    std::cout << "Invalid name_only parameter. " << name_only << std::endl;
+    CliState::GetInstance().MarkUsageError("Invalid name_only parameter. " + name_only);
     return;
   }
 
@@ -2338,7 +2344,7 @@ void RunGetJobList(GetJobListOptions const &opt) {
       break;
     }
     default:
-      std::cout << "Invalid sort_by parameter. " << sort_by << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid sort_by parameter. " + sort_by);
       return;
   }
 
@@ -2436,11 +2442,13 @@ void RunGetJobList(GetJobListOptions const &opt) {
     }
 
     default:
-      std::cout << "Invalid name_only parameter. " << name_only << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid name_only parameter. " + name_only);
       return;
   }
 
-  if (opt.json_type) {
+  if (dingodb::cli::IsJsonOutput()) {
+    CliState::GetInstance().SetJsonDataFromProto(response);
+  } else if (opt.json_type) {
     for (const auto &job : unorganized_response.job_list()) {
       std::cout << "job: " << job.DebugString() << std::endl;
     }
@@ -2477,7 +2485,7 @@ void SetUpCleanJobList(CLI::App &app) {
 
 void RunCleanJobList(CleanJobListOption const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::CleanJobListRequest request;
@@ -2496,7 +2504,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
     range.erase(std::remove(range.begin(), range.end(), ' '), range.end());
 
     if (range.size() < 5) {
-      std::cout << "Invalid id_range parameter. " << opt.id_range << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid id_range parameter. " + opt.id_range);
       return;
     }
 
@@ -2505,7 +2513,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
     } else if (range.front() == '(') {
       include_start = false;
     } else {
-      std::cout << "Invalid id_range parameter. " << opt.id_range << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid id_range parameter. " + opt.id_range);
       return;
     }
 
@@ -2514,7 +2522,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
     } else if (range.back() == ')') {
       include_end = false;
     } else {
-      std::cout << "Invalid id_range parameter. " << opt.id_range << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid id_range parameter. " + opt.id_range);
       return;
     }
 
@@ -2522,7 +2530,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
     if (dash_pos == std::string::npos) {
       dash_pos = range.find(',');
       if (dash_pos == std::string::npos) {
-        std::cout << "Invalid id_range parameter. " << opt.id_range << std::endl;
+        CliState::GetInstance().MarkUsageError("Invalid id_range parameter. " + opt.id_range);
         return;
       }
     }
@@ -2531,7 +2539,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
       start_id = std::stoll(range.substr(1, dash_pos - 1));
       end_id = std::stoll(range.substr(dash_pos + 1, range.size() - dash_pos - 2));
     } catch (const std::exception &e) {
-      std::cout << "Invalid id_range parameter. " << opt.id_range << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid id_range parameter. " + opt.id_range);
       return;
     }
 
@@ -2599,7 +2607,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
       try {
         id_array.push_back(std::stoll(token));
       } catch (const std::exception &e) {
-        std::cout << "Invalid id_array parameter. " << opt.id_array << std::endl;
+        CliState::GetInstance().MarkUsageError("Invalid id_array parameter. " + opt.id_array);
         return;
       }
       ids_str.erase(0, pos + 1);
@@ -2608,7 +2616,7 @@ void RunCleanJobList(CleanJobListOption const &opt) {
     try {
       id_array.push_back(std::stoll(ids_str));
     } catch (const std::exception &e) {
-      std::cout << "Invalid id_array parameter. " << opt.id_array << std::endl;
+      CliState::GetInstance().MarkUsageError("Invalid id_array parameter. " + opt.id_array);
       return;
     }
 
@@ -2669,7 +2677,7 @@ void SetUpUpdateRegionCmdStatus(CLI::App &app) {
 
 void RunUpdateRegionCmdStatus(UpdateRegionCmdStatusOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateRegionCmdStatusRequest request;
   dingodb::pb::coordinator::UpdateRegionCmdStatusResponse response;
@@ -2695,7 +2703,7 @@ void SetUpCleanStoreOperation(CLI::App &app) {
 
 void RunCleanStoreOperation(CleanStoreOperationOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::CleanStoreOperationRequest request;
   dingodb::pb::coordinator::CleanStoreOperationResponse response;
@@ -2719,7 +2727,7 @@ void SetUpAddStoreOperation(CLI::App &app) {
 
 void RunAddStoreOperation(AddStoreOperationOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::AddStoreOperationRequest request;
@@ -2748,7 +2756,7 @@ void SetUpRemoveStoreOperation(CLI::App &app) {
 
 void RunRemoveStoreOperation(RemoveStoreOperationOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::RemoveStoreOperationRequest request;
@@ -2775,7 +2783,7 @@ void SetUpGetRegionCmd(CLI::App &app) {
 
 void RunGetRegionCmd(GetRegionCmdOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetRegionCmdRequest request;
@@ -2802,7 +2810,7 @@ void SetUpGetStoreMetricsn(CLI::App &app) {
 
 void RunGetStoreMetrics(GetStoreMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetStoreMetricsRequest request;
@@ -2840,7 +2848,7 @@ void SetUpDeleteStoreMetrics(CLI::App &app) {
 
 void RunDeleteStoreMetrics(DeleteStoreMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::DeleteStoreMetricsRequest request;
@@ -2863,7 +2871,7 @@ void SetUpGetRegionMetrics(CLI::App &app) {
 
 void RunGetRegionMetrics(GetRegionMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetRegionMetricsRequest request;
@@ -2889,7 +2897,7 @@ void SetUpDeleteRegionMetrics(CLI::App &app) {
 
 void RunDeleteRegionMetrics(DeleteRegionMetricsOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::DeleteRegionMetricsRequest request;
   dingodb::pb::coordinator::DeleteRegionMetricsResponse response;
@@ -2914,7 +2922,7 @@ void SetUpUpdateGCSafePoint(CLI::App &app) {
 
 void RunUpdateGCSafePoint(UpdateGCSafePointOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateGCSafePointRequest request;
   dingodb::pb::coordinator::UpdateGCSafePointResponse response;
@@ -2959,7 +2967,7 @@ void SetUpUpdateTenantGCSafePoint(CLI::App &app) {
 
 void RunUpdateTenantGCSafePoint(UpdateTenantGCSafePointOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateGCSafePointRequest request;
   dingodb::pb::coordinator::UpdateGCSafePointResponse response;
@@ -2994,7 +3002,7 @@ void SetUpUpdateGCFlag(CLI::App &app) {
 
 void RunUpdateGCFlag(UpdateGCFlagOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::UpdateGCSafePointRequest request;
   dingodb::pb::coordinator::UpdateGCSafePointResponse response;
@@ -3006,7 +3014,7 @@ void RunUpdateGCFlag(UpdateGCFlagOptions const &opt) {
     request.set_gc_flag(
         ::dingodb::pb::coordinator::UpdateGCSafePointRequest_GcFlagType::UpdateGCSafePointRequest_GcFlagType_GC_STOP);
   } else {
-    std::cout << "gc_flag is invalid, must be start or stop" << std::endl;
+    CliState::GetInstance().MarkUsageError("gc_flag is invalid, must be start or stop");
     return;
   }
 
@@ -3035,7 +3043,7 @@ void SetUpGetGCSafePoint(CLI::App &app) {
 
 void RunGetGCSafePoint(GetGCSafePointOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::GetGCSafePointRequest request;
   dingodb::pb::coordinator::GetGCSafePointResponse response;
@@ -3063,7 +3071,7 @@ void SetUpBalanceLeader(CLI::App &app) {
 void RunBalanceLeader(BalanceLeaderOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
     DINGO_LOG(ERROR) << "Set Up failed coor_url=" << opt.coor_url;
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::BalanceLeaderRequest request;
   dingodb::pb::coordinator::BalanceLeaderResponse response;
@@ -3092,7 +3100,7 @@ void SetUpBalanceRegion(CLI::App &app) {
 void RunBalanceRegion(BalanceRegionOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
     DINGO_LOG(ERROR) << "Set Up failed coor_url=" << opt.coor_url;
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::BalanceRegionRequest request;
   dingodb::pb::coordinator::BalanceRegionResponse response;
@@ -3122,7 +3130,7 @@ void SetUpUpdateForceReadOnly(CLI::App &app) {
 
 void RunUpdateForceReadOnly(UpdateForceReadOnlyOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::ConfigCoordinatorRequest request;
   dingodb::pb::coordinator::ConfigCoordinatorResponse response;
@@ -3149,7 +3157,7 @@ void SetUpGetBackUpStatus(CLI::App &app) {
 }
 void RunGetBackUpStatus(GetBackUpStatusOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::RegisterBackupStatusRequest request;
   dingodb::pb::coordinator::RegisterBackupStatusResponse response;
@@ -3177,7 +3185,7 @@ void SetUpGetRestoreStatus(CLI::App &app) {
 
 void RunGetRestoreStatus(GetRestoreStatusOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::coordinator::RegisterRestoreStatusRequest request;
   dingodb::pb::coordinator::RegisterRestoreStatusResponse response;
@@ -3221,7 +3229,7 @@ void SetUpEnableOrDisableBalance(CLI::App &app) {
 
 void RunEnableOrDisableBalance(EnableOrDisableBalanceOptions const &opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetCoordinatorMapRequest get_coordinator_map_request;

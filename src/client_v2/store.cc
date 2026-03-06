@@ -91,7 +91,7 @@ void SetUpStoreSubCommands(CLI::App& app) {
 
 static bool SetUpStore(const std::string& url, const std::vector<std::string>& addrs, int64_t region_id) {
   if (Helper::SetUp(url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   if (!addrs.empty()) {
@@ -398,7 +398,7 @@ void SetUpAddRegion(CLI::App& app) {
 void RunAddRegion(AddRegionOptions const& opt) {
   std::string value;
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   std::vector<std::string> raft_addrs;
   butil::SplitString(opt.raft_addrs, ',', &raft_addrs);
@@ -421,7 +421,7 @@ void SetUpKvGet(CLI::App& app) {
 void RunKvGet(KvGetOptions const& opt) {
   std::string value;
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvGet(opt, value);
 }
@@ -438,7 +438,7 @@ void SetUpKvPut(CLI::App& app) {
 
 void RunKvPut(KvPutOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   std::string value = opt.value.empty() ? client_v2::Helper::GenRandomString(256) : opt.value;
   client_v2::SendKvPut(opt, value);
@@ -456,7 +456,7 @@ void SetUpChangeRegion(CLI::App& app) {
 
 void RunChangeRegion(ChangeRegionOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendChangeRegion(opt);
@@ -473,7 +473,7 @@ void SetUpMergeRegionAtStore(CLI::App& app) {
 
 void RunMergeRegionAtStore(MergeRegionAtStoreOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.source_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendMergeRegion(opt);
 }
@@ -488,7 +488,7 @@ void SetUpDestroyRegion(CLI::App& app) {
 
 void RunDestroyRegion(DestroyRegionOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendDestroyRegion(opt);
 }
@@ -503,7 +503,7 @@ void SetUpSnapshot(CLI::App& app) {
 
 void RunSnapshot(SnapshotOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendSnapshot(opt);
 }
@@ -523,7 +523,7 @@ void SetUpBatchAddRegion(CLI::App& app) {
 
 void RunBatchAddRegion(BatchAddRegionOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::BatchSendAddRegion(opt);
@@ -539,7 +539,7 @@ void SetUpSnapshotVectorIndex(CLI::App& app) {
 
 void RunSnapshotVectorIndex(SnapshotVectorIndexOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendSnapshotVectorIndex(opt);
 }
@@ -553,7 +553,7 @@ void SetUpCompact(CLI::App& app) {
 
 void RunCompact(CompactOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendCompact("");
 }
@@ -567,7 +567,7 @@ void SetUpGetMemoryStats(CLI::App& app) {
 
 void RunGetMemoryStats(GetMemoryStatsOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::GetMemoryStats();
 }
@@ -582,7 +582,7 @@ void SetUpReleaseFreeMemory(CLI::App& app) {
 
 void RunReleaseFreeMemory(ReleaseFreeMemoryOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::ReleaseFreeMemory(opt);
 }
@@ -600,7 +600,7 @@ void SetUpKvBatchGet(CLI::App& app) {
 
 void RunKvBatchGet(KvBatchGetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvBatchGet(opt);
 }
@@ -618,7 +618,7 @@ void SetUpKvBatchPut(CLI::App& app) {
 
 void RunKvBatchPut(KvBatchPutOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvBatchPut(opt);
 }
@@ -635,7 +635,7 @@ void SetUpKvPutIfAbsent(CLI::App& app) {
 
 void RunKvPutIfAbsent(KvPutIfAbsentOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvPutIfAbsent(opt);
 }
@@ -652,7 +652,7 @@ void SetUpKvBatchPutIfAbsent(CLI::App& app) {
 
 void RunKvBatchPutIfAbsent(KvBatchPutIfAbsentOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvBatchPutIfAbsent(opt);
 }
@@ -668,7 +668,7 @@ void SetUpKvBatchDelete(CLI::App& app) {
 
 void RunKvBatchDelete(KvBatchDeleteOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvBatchDelete(opt);
 }
@@ -684,7 +684,7 @@ void SetUpKvDeleteRange(CLI::App& app) {
 
 void RunKvDeleteRange(KvDeleteRangeOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvDeleteRange(opt);
 }
@@ -700,7 +700,7 @@ void SetUpKvScan(CLI::App& app) {
 
 void RunKvScan(KvScanOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvScan(opt);
 }
@@ -716,7 +716,7 @@ void SetUpKvCompareAndSet(CLI::App& app) {
 
 void RunKvCompareAndSet(KvCompareAndSetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvCompareAndSet(opt);
 }
@@ -734,7 +734,7 @@ void SetUpKvBatchCompareAndSet(CLI::App& app) {
 
 void RunKvBatchCompareAndSet(KvBatchCompareAndSetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::SendKvBatchCompareAndSet(opt);
@@ -752,7 +752,7 @@ void SetUpKvScanBeginV2(CLI::App& app) {
 
 void RunKvScanBeginV2(KvScanBeginV2Options const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvScanBeginV2(opt);
 }
@@ -769,7 +769,7 @@ void SetUpKvScanContinueV2(CLI::App& app) {
 
 void RunKvScanContinueV2(KvScanContinueV2Options const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvScanContinueV2(opt);
 }
@@ -786,7 +786,7 @@ void SetUpKvScanReleaseV2(CLI::App& app) {
 
 void RunKvScanReleaseV2(KvScanReleaseV2Options const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendKvScanReleaseV2(opt);
 }
@@ -806,7 +806,7 @@ void SetUpTxnGet(CLI::App& app) {
 
 void RunTxnGet(TxnGetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnGet(opt);
 }
@@ -833,7 +833,7 @@ void SetUpTxnScan(CLI::App& app) {
 
 void RunTxnScan(TxnScanOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::common::Region region = SendQueryRegion(opt.id);
@@ -878,7 +878,7 @@ void SetUpTxnScanLock(CLI::App& app) {
 
 void RunTxnScanLock(TxnScanLockOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::common::Region region = SendQueryRegion(opt.id);
@@ -921,7 +921,7 @@ void SetUpTxnPessimisticLock(CLI::App& app) {
 
 void RunTxnPessimisticLock(TxnPessimisticLockOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnPessimisticLock(opt);
 }
@@ -941,7 +941,7 @@ void SetUpTxnPessimisticRollback(CLI::App& app) {
 
 void RunTxnPessimisticRollback(TxnPessimisticRollbackOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnPessimisticRollback(opt);
 }
@@ -979,7 +979,7 @@ void SetUpTxnPrewrite(CLI::App& app) {
 
 void RunTxnPrewrite(TxnPrewriteOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnPrewrite(opt);
 }
@@ -1000,7 +1000,7 @@ void SetUpTxnCommit(CLI::App& app) {
 
 void RunTxnCommit(TxnCommitOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnCommit(opt);
 }
@@ -1021,7 +1021,7 @@ void SetUpTxnCheckTxnStatus(CLI::App& app) {
 
 void RunTxnCheckTxnStatus(TxnCheckTxnStatusOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnCheckTxnStatus(opt);
 }
@@ -1043,7 +1043,7 @@ void SetUpTxnResolveLock(CLI::App& app) {
 
 void RunTxnResolveLock(TxnResolveLockOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnResolveLock(opt);
 }
@@ -1065,7 +1065,7 @@ void SetUpTxnBatchGet(CLI::App& app) {
 
 void RunTxnBatchGet(TxnBatchGetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnBatchGet(opt);
 }
@@ -1085,7 +1085,7 @@ void SetUpTxnBatchRollback(CLI::App& app) {
 
 void RunTxnBatchRollback(TxnBatchRollbackOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnBatchRollback(opt);
 }
@@ -1105,7 +1105,7 @@ void SetUpTxnHeartBeat(CLI::App& app) {
 
 void RunTxnHeartBeat(TxnHeartBeatOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnHeartBeat(opt);
 }
@@ -1122,7 +1122,7 @@ void SetUpTxnGC(CLI::App& app) {
 
 void RunTxnGC(TxnGCOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnGc(opt);
 }
@@ -1143,7 +1143,7 @@ void SetUpTxnCount(CLI::App& app) {
 }
 void RunTxnCount(TxnCountOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::common::Region region = SendQueryRegion(opt.id);
@@ -1180,7 +1180,7 @@ void SetUpTxnDeleteRange(CLI::App& app) {
 
 void RunTxnDeleteRange(TxnDeleteRangeOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnDeleteRange(opt);
 }
@@ -1201,7 +1201,7 @@ void SetUpTxnDump(CLI::App& app) {
 
 void RunTxnDump(TxnDumpOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::SendTxnDump(opt);
 }
@@ -1422,7 +1422,7 @@ void TestBatchPutGet(TestBatchPutGetOptions const& opt) {
 
 void RunTestBatchPutGet(TestBatchPutGetOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::TestBatchPutGet(opt);
@@ -1471,7 +1471,7 @@ void TestRegionLifecycle(TestRegionLifecycleOptions const& opt) {
 
 void RunTestRegionLifecycle(TestRegionLifecycleOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   std::vector<std::string> raft_addrs;
   butil::SplitString(opt.raft_addrs, ',', &raft_addrs);
@@ -1534,7 +1534,7 @@ void TestDeleteRangeWhenTransferLeader(TestDeleteRangeWhenTransferLeaderOptions 
 
 void RunTestDeleteRangeWhenTransferLeader(TestDeleteRangeWhenTransferLeaderOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   client_v2::TestDeleteRangeWhenTransferLeader(opt);
 }
@@ -1608,7 +1608,7 @@ void AutoMergeRegion(AutoMergeRegionOptions const& opt) {
 
 void RunAutoMergeRegion(AutoMergeRegionOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   AutoMergeRegion(opt);
@@ -1637,7 +1637,7 @@ void AutoDropTable(AutoDropTableOptions const& opt) {
 
 void RunAutoDropTable(AutoDropTableOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::AutoDropTable(opt);
@@ -1702,7 +1702,7 @@ void CheckTableDistribution(CheckTableDistributionOptions const& opt) {
 
 void RunCheckTableDistribution(CheckTableDistributionOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::CheckTableDistribution(opt);
@@ -1760,7 +1760,7 @@ void CheckIndexDistribution(CheckIndexDistributionOptions const& opt) {
 
 void RunCheckIndexDistribution(CheckIndexDistributionOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   client_v2::CheckIndexDistribution(opt);
@@ -1781,7 +1781,7 @@ void SetUpDumpDb(CLI::App& app) {
 
 void RunDumpDb(DumpDbOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   auto status = client_v2::DumpDb(opt);
@@ -1980,7 +1980,7 @@ butil::Status WhichRegion(WhichRegionOptions const& opt) {
 
 void RunWhichRegion(WhichRegionOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   auto status = WhichRegion(opt);
@@ -2028,7 +2028,7 @@ void SendDumpRegion(int64_t region_id, int64_t offset, int64_t limit, std::vecto
 
 void RunDumpRegion(DumpRegionOptions const& opt) {
   if (!SetUpStore(opt.coor_url, {}, opt.region_id)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   std::vector<std::string> exclude_columns;
@@ -2051,7 +2051,7 @@ void SetUpRegionMetrics(CLI::App& app) {
 
 void RunRegionMetrics(RegionMetricsOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::debug::DebugRequest request;
   dingodb::pb::debug::DebugResponse response;
@@ -2093,7 +2093,7 @@ void SetUpQueryRegionStatusMetrics(CLI::App& app) {
 
 void RunQueryRegionStatus(QueryRegionStatusOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::debug::DebugRequest request;
   dingodb::pb::debug::DebugResponse response;
@@ -2141,7 +2141,7 @@ void SetUpModifyRegionMeta(CLI::App& app) {
 
 void RunModifyRegionMeta(ModifyRegionMetaOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
   dingodb::pb::debug::ModifyRegionMetaRequest request;
   dingodb::pb::debug::ModifyRegionMetaResponse response;
@@ -2172,7 +2172,7 @@ void SetUpQueryMemoryLocks(CLI::App& app) {
 
 void RunQueryMemoryLocks(QueryMemoryLocksOptions const& opt) {
   if (!SetUpStore("", {opt.store_addrs}, 0)) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::debug::DumpMemoryLockRequest request;
@@ -2220,7 +2220,7 @@ void SetUpStoreEnableOrDisableSplitAndMerge(CLI::App& app) {
 
 void RunStoreEnableOrDisableSplitAndMerge(StoreEnableOrDisableSplitAndMergeOptions const& opt) {
   if (Helper::SetUp(opt.coor_url) < 0) {
-    exit(-1);
+    ThrowCliExit(1);
   }
 
   dingodb::pb::coordinator::GetStoreMapRequest get_store_map_request;
