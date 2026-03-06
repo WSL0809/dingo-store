@@ -1160,7 +1160,11 @@ void SetUpGetTable(CLI::App &app) {
   cmd->add_option("--id", opt->id, "Request parameter table id")
       ->check(CLI::Range(1, std::numeric_limits<int32_t>::max()))
       ->required();
-  cmd->add_option("--is_index", opt->is_index, "Request parameter is_index")->default_val(false)->default_str("false");
+  auto *deprecated_is_index =
+      cmd->add_option("--is_index", opt->is_index, "Deprecated no-op option; ignored by GetTable.")
+          ->default_val(false)
+          ->default_str("false");
+  deprecated_is_index->group("");
   cmd->callback([opt]() { RunGetTable(*opt); });
 }
 

@@ -34,6 +34,7 @@
 #include "client_v2/coordinator.h"
 #include "client_v2/document_index.h"
 #include "client_v2/dump.h"
+#include "client_v2/help.h"
 #include "client_v2/helper.h"
 #include "client_v2/interation.h"
 #include "client_v2/kv.h"
@@ -285,6 +286,8 @@ int main(int argc, char* argv[]) {
     }
     InteractiveCli(app);
   });
+
+  client_v2::ConfigureHelp(app);
 
   if (argc <= 1) {
     std::cout << app.help() << std::endl;

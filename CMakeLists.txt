@@ -14,6 +14,7 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 project(dingodb-cli C CXX)
+include(CTest)
 
 option(LINK_TCMALLOC "Link tcmalloc if possible" ON)
 option(DINGO_BUILD_STATIC "Link libraries statically to generate dingodb_cli" OFF)
@@ -154,7 +155,7 @@ set(CLI_SUPPORT_SRCS
 
 add_library(dingodb_cli_support STATIC ${CLI_SUPPORT_SRCS})
 
-file(GLOB CLIENT_V2_SRCS ${PROJECT_SOURCE_DIR}/src/client_v2/*.cc)
+file(GLOB CLIENT_V2_SRCS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/client_v2/*.cc)
 add_executable(dingodb_cli ${CLIENT_V2_SRCS} $<TARGET_OBJECTS:proto_objs>)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -278,3 +279,38 @@ target_compile_definitions(dingodb_cli PUBLIC GLOG_CUSTOM_PREFIX_SUPPORT)
 target_link_libraries(dingodb_cli_support PUBLIC serial)
 
 target_link_libraries(dingodb_cli PRIVATE dingodb_cli_support serial CLI11::CLI11 ${CLI_LINK_LIBS})
+
+if(BUILD_TESTING)
+  add_test(
+    NAME dingodb_cli_help_root
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=root -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_create_table
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=create_table -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_kv_put
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=kv_put -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_get_table_by_name
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=get_table_by_name -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_coor_kv_range
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=coor_kv_range -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_get_table
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=get_table -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_delete_executor_alias
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=delete_executor_alias -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+  add_test(
+    NAME dingodb_cli_help_no_request_parameter
+    COMMAND ${CMAKE_COMMAND} -DCLI=$<TARGET_FILE:dingodb_cli> -DTESTCASE=no_request_parameter -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_cli_help.cmake)
+endif()

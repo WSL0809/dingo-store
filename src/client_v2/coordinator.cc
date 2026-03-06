@@ -815,12 +815,20 @@ void RunCreateExecutor(CreateExecutorOption const &opt) {
 
 void SetUpDeleteExecutor(CLI::App &app) {
   auto opt = std::make_shared<DeleteExecutorOption>();
-  auto *cmd = app.add_subcommand("DeleteExcutor", "Delete executor ")->group("Coordinator Command");
-  cmd->add_option("--coor_url", opt->coor_url, "Coordinator url, default:file://./coor_list");
-  cmd->add_option("--keyring", opt->keyring, "Request parameter keyring")->required();
-  cmd->add_option("--user", opt->user, "Request parameter user")->required();
-  cmd->add_option("--id", opt->id, "Request parameter executor id")->required();
-  cmd->callback([opt]() { RunDeleteExecutor(*opt); });
+  auto setup_command = [opt](CLI::App *cmd) {
+    cmd->add_option("--coor_url", opt->coor_url, "Coordinator url, default:file://./coor_list");
+    cmd->add_option("--keyring", opt->keyring, "Request parameter keyring")->required();
+    cmd->add_option("--user", opt->user, "Request parameter user")->required();
+    cmd->add_option("--id", opt->id, "Request parameter executor id")->required();
+    cmd->callback([opt]() { RunDeleteExecutor(*opt); });
+  };
+
+  auto *cmd = app.add_subcommand("DeleteExecutor", "Delete executor")->group("Coordinator Command");
+  setup_command(cmd);
+
+  auto *deprecated_cmd = app.add_subcommand("DeleteExcutor", "Deprecated alias for DeleteExecutor");
+  deprecated_cmd->group("");
+  setup_command(deprecated_cmd);
 }
 
 void RunDeleteExecutor(DeleteExecutorOption const &opt) {

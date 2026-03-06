@@ -330,7 +330,7 @@ void SetUpCoorKvRange(CLI::App& app) {
   auto* cmd = app.add_subcommand("CoorKvRange", "Coor kv range ")->group("Kv command");
   cmd->add_option("--key", opt->key, "Request parameter key")->required();
   cmd->add_option("--range_end", opt->range_end, "Request parameter range_end")->default_val("");
-  cmd->add_option("--sub_rversion", opt->limit, "Request parameter sub_rversion")->default_val(50);
+  cmd->add_option("--limit,--sub_rversion", opt->limit, "Limit for range query")->default_val(50);
   cmd->add_option("--keys_only", opt->keys_only, "Request parameter keys_only")
       ->default_val(false)
       ->default_str("false");
